@@ -1,4 +1,10 @@
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  dialog,
+  Notification,
+} = require("electron");
 const path = require("path");
 
 const parsePdfData = require("./utils/parsePdfData");
@@ -64,15 +70,24 @@ ipcMain.handle("showDialog", async () => {
         extensions: ["pdf"],
       },
     ],
-    properties: ["openFile", "dontAddToRecent"],
+    properties: ["openFile", "dontAddToRecent", "multiSelections"],
   });
 
   return result;
 });
 
-ipcMain.handle("parsePdfData", async (e, pdfFilePath) => {
-  const extractedData = await parsePdfData(pdfFilePath);
-  return extractedData;
+ipcMain.handle("parsePdfData", async (e, pdfFilePaths) => {
+  const result = [];
+  for (let pdfFilePath of pdfFilePaths) {
+    let extractedData = await parsePdfData(pdfFilePath);
+    console.log({ extractedData });
+    if (typeof extractedData == "string") {
+      new Notification({ title: "Parsing Failed", body: extractedData }).show();
+    } else {
+      result.push(extractedData);
+    }
+  }
+  return result;
 });
 
 ipcMain.handle(

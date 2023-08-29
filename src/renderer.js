@@ -6,14 +6,21 @@ const updatePayments = document.getElementById("update-payments");
 
 uploadButton.addEventListener("click", async () => {
   const result = await ipcRenderer.invoke("showDialog");
-  let [pdfFilePath] = result?.filePaths;
 
-  const extractedData = await ipcRenderer.invoke("parsePdfData", pdfFilePath);
+  const extractedData = await ipcRenderer.invoke(
+    "parsePdfData",
+    result.filePaths
+  );
   const table = createTable(extractedData);
 
   const row = document.createElement("div");
   row.className = "row";
-  row.append(table);
+
+  const col = document.createElement("div");
+  col.className = "col";
+
+  row.append(col);
+  col.append(table);
   document.querySelector(".container-fluid").append(row);
 
   const buttonContainer = document.querySelector(".button-container");
