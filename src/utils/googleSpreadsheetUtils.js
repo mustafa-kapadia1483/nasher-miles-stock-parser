@@ -30,6 +30,12 @@ async function updateGoogleSheets(
   if (sheet === undefined || sheet === null) {
     sheet = await doc.addSheet({ headerValues: Object.keys(extractedData[0]) });
     await sheet.updateProperties({ title: sheetName });
+  } else {
+    try {
+      await sheet.loadHeaderRow();
+    } catch (error) {
+      sheet.setHeaderRow(Object.keys(extractedData[0]));
+    }
   }
 
   console.log(sheet.title);

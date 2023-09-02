@@ -75,8 +75,33 @@ uploadButton.addEventListener("click", async () => {
     localStorage.setItem("sheetLink", spreadsheeLinkInput?.value);
     localStorage.setItem("sheetName", sheetNameInput?.value);
 
-    confirm(`${extractedData?.length} orders have been uploaded`);
-    [row, uploadDataButton, col1, col2].forEach(el => el.remove());
+    const dialog = createDialogBox();
+    const p = document.createElement("p");
+    p.innerHTML = `${extractedData?.length} orders have been uploaded. <a href="${spreadsheeLinkInput.value}" target="_blank">Click here to open</a>`;
+
+    dialog.append(p);
+
+    const form = document.createElement("form");
+    form.setAttribute("method", "dialog");
+
+    dialog.append(form);
+
+    const dialogBoxButton = createButton("OK");
+    dialog.append(dialogBoxButton);
+
+    document.body.append(dialog);
+
+    dialogBoxButton.addEventListener("click", () => {
+      [
+        row,
+        uploadDataButton,
+        col1,
+        col2,
+        dialog,
+        form,
+        dialogBoxButton,
+      ].forEach(el => el.remove());
+    });
   });
 });
 
@@ -146,4 +171,11 @@ function createCol() {
   const col = document.createElement("div");
   col.className = "col";
   return col;
+}
+
+function createDialogBox(open = true) {
+  const dialog = document.createElement("dialog");
+  dialog.setAttribute("open", open);
+
+  return dialog;
 }
