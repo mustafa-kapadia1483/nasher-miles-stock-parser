@@ -1,5 +1,7 @@
 const parseDate = require("./strftime");
 
+const amazonAsinSkuMappingJson = require("../../amazon-asin-sku-mapping.json");
+
 const DATE_REGEX = /(\d{1,4})[\p{Dash}.\/](\d{1,2})[\p{Dash}.\/](\d{2,4})/gmu;
 
 function addDays(date, days) {
@@ -212,6 +214,15 @@ function parseAmazonInvoice(Texts) {
       continue;
     }
 
+    /* Overwriting SKU read logic to read data from amazon asin sku mapping file */
+    for (let i = 0; i < asinAr.length; i++) {
+      let asin = asinAr[i].trim();
+
+      if (amazonAsinSkuMappingJson.hasOwnProperty(asin)) {
+        skuAr[i] = amazonAsinSkuMappingJson[asin][0]["seller-sku"];
+      }
+    }
+
     if (productDescriptionFlag) {
       productDescription += text;
     }
@@ -254,7 +265,7 @@ function parseAmazonInvoice(Texts) {
 }
 
 async function parsePdfData(filePath) {
-  const PDFParser = await import("pdf2json");
+  const PDFParser = await import("pdf2json/pdfparser.js");
   const pdfParser = new PDFParser.default();
 
   const extractedData = [];

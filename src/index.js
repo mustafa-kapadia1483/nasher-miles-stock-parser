@@ -4,6 +4,7 @@ const {
   ipcMain,
   dialog,
   Notification,
+  webContents,
 } = require("electron");
 const path = require("path");
 
@@ -25,6 +26,7 @@ const createWindow = () => {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
       contextIsolation: false,
+      devTools: true,
     },
   });
 
@@ -32,7 +34,7 @@ const createWindow = () => {
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 };
 
 // This method will be called when Electron has finished
