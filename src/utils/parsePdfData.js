@@ -1,6 +1,7 @@
 const parseDate = require("./strftime");
 
 const amazonAsinSkuMappingJson = require("../../amazon-asin-sku-mapping.json");
+const flipkartFsnSkuMappingJson = require("../../flipkart-fsn-sku-mapping.json");
 
 const DATE_REGEX = /(\d{1,4})[\p{Dash}.\/](\d{1,2})[\p{Dash}.\/](\d{2,4})/gmu;
 
@@ -53,6 +54,11 @@ function parseNasherMilesInvoice(Texts) {
 
   let invoiceDate = Texts[3].R[0].T;
   invoiceDate = decodeAndExtractText(invoiceDate, DATE_REGEX);
+
+  const invoiceDateAr = invoiceDate.split(/\p{Dash}/gu);
+  let endDate = getEndDate(
+    new Date(invoiceDateAr[0], invoiceDateAr[1] - 1, invoiceDateAr[2])
+  );
 
   // Finding index of total text & then getting total invoice value by the next array element in Texts
   const TOTAL_TEXT_INDEX = Texts.findIndex(({ R }) => R[0].T == "Total");
@@ -110,12 +116,14 @@ function parseNasherMilesInvoice(Texts) {
   return {
     orderId,
     invoiceDate,
+    endDate,
     totalInvoiceAmount,
     billToName,
     billToState,
     billToZipCode,
     billToAddress,
     sku,
+    asin: "NA",
   };
 }
 
@@ -208,6 +216,7 @@ function parseAmazonInvoice(Texts) {
         asinAr.push(asin.at(-1));
       }
       if (sku) {
+        // removes brackets () from sku regex match
         skuAr.push(sku.at(-1)?.replaceAll(/[/(/)]/g, ""));
       }
       productDescription = "";
@@ -264,6 +273,135 @@ function parseAmazonInvoice(Texts) {
   };
 }
 
+function parseFlipkartInvoice(Texts) {
+  /* 
+    FSN in Flipkart Invoice is considered as ASIN 
+    Flipkart Invoices have 2 variations: 1 -> With ASIN, 2 -> Without ASIN
+  */
+  const isAsinPresent = Texts.some(({ R }) =>
+    decodeAndExtractText(R[0].T).startsWith("FSN")
+  );
+
+  if (!isAsinPresent) {
+    return "Non FSN Flipkart invoices are not supported yet.";
+  }
+
+  let invoiceDate = "",
+    orderId = "";
+  for (let i in Texts) {
+    let { R } = Texts[i];
+    if (orderId.length == 0) {
+      let text = decodeAndExtractText(R[0].T, /(?<=order\s+id:\s+)\w+/gi);
+
+      if (text.length > 0) {
+        orderId = text;
+      }
+    }
+
+    if (invoiceDate.length == 0) {
+      let text = decodeAndExtractText(Texts[i - 1]?.R[0].T, DATE_REGEX);
+
+      if (text?.length > 0) {
+        invoiceDate = text;
+      }
+    }
+
+    if (invoiceDate.length > 0 && orderId.length > 0) {
+      break;
+    }
+  }
+
+  let invoiceDateArr = invoiceDate.split(/[\p{Dash}.\/]/gu);
+  let endDate = getEndDate(
+    new Date(invoiceDateArr[2], invoiceDateArr[1] - 1, invoiceDateArr[0])
+  );
+
+  const BILL_TO_TEXT_INDEX = Texts.findIndex(({ R }) =>
+    decodeAndExtractText(R[0].T).toLowerCase().startsWith("bill to")
+  );
+
+  const PHONE_TEXT_INDEX =
+    BILL_TO_TEXT_INDEX +
+    Texts.slice(BILL_TO_TEXT_INDEX).findIndex(({ R }) =>
+      decodeAndExtractText(R[0].T).toLowerCase().startsWith("phone")
+    );
+
+  let addressAr = Texts.slice(BILL_TO_TEXT_INDEX + 1, PHONE_TEXT_INDEX);
+  console.log(addressAr);
+  for (let i in addressAr) {
+    addressAr[i] = decodeAndExtractText(addressAr[i].R[0].T);
+  }
+
+  let billToName = addressAr.shift();
+
+  let billToAddress = addressAr.join("");
+  let stateZip = addressAr.at(-1);
+  let billToZipCode = stateZip.match(/\d{6}/g)[0];
+
+  let stateZipArr = stateZip.split(/\s+/);
+  let billToState = stateZipArr
+    .slice(stateZipArr.indexOf(billToZipCode) + 1)
+    .join(" ");
+
+  let GRAND_TOTAL_TEXT_INDEX = Texts.findIndex(({ R }) =>
+    decodeAndExtractText(R[0].T).toLowerCase().startsWith("grand total")
+  );
+
+  const totalInvoiceAmount = Texts[GRAND_TOTAL_TEXT_INDEX + 2].R[0].T;
+
+  const FIRST_TOTAL_RUPEE_TEXT_INDEX = Texts.findIndex(({ R }) =>
+    decodeAndExtractText(R[0].T)
+      .toLowerCase()
+      .replace(/[\u20b9\s]+/g, "")
+      .endsWith("total")
+  );
+
+  const ONLY_TOTAL_TEXT_INDEX =
+    1 +
+    FIRST_TOTAL_RUPEE_TEXT_INDEX +
+    Texts.slice(FIRST_TOTAL_RUPEE_TEXT_INDEX + 1).findIndex(({ R }) =>
+      decodeAndExtractText(R[0].T).toLowerCase().startsWith("total")
+    );
+
+  let fsnAr = [];
+  let skuAr = [];
+  const productTexts = Texts.slice(
+    FIRST_TOTAL_RUPEE_TEXT_INDEX + 1,
+    ONLY_TOTAL_TEXT_INDEX
+  );
+
+  for (let i = 0; i < productTexts.length; i++) {
+    let { R } = productTexts[i];
+    if (R[0].T.toLowerCase().startsWith("fsn")) {
+      fsnAr.push(decodeAndExtractText(productTexts[++i].R[0].T));
+    }
+  }
+
+  for (let fsn of fsnAr) {
+    if (flipkartFsnSkuMappingJson.hasOwnProperty(fsn)) {
+      skuAr.push(flipkartFsnSkuMappingJson[fsn].sku);
+    } else {
+      skuAr.push("NA");
+    }
+  }
+
+  const asin = fsnAr.join(", ");
+  const sku = skuAr.join(", ");
+
+  return {
+    orderId,
+    invoiceDate,
+    endDate,
+    billToName,
+    billToState,
+    billToZipCode,
+    billToAddress,
+    totalInvoiceAmount,
+    asin,
+    sku,
+  };
+}
+
 async function parsePdfData(filePath) {
   const PDFParser = await import("pdf2json/pdfparser.js");
   const pdfParser = new PDFParser.default();
@@ -289,11 +427,19 @@ async function parsePdfData(filePath) {
         const { Texts } = pdfData.Pages[0];
 
         var fs = require("fs");
-        fs.writeFile("test.txt", JSON.stringify(Texts), function (err) {
-          if (err) {
-            console.log(err);
+        fs.writeFile(
+          "test.txt",
+          JSON.stringify(pdfData.Pages[0]),
+          function (err) {
+            if (err) {
+              console.log(err);
+            }
           }
-        });
+        );
+
+        if (Texts.length == 0) {
+          resolve(`Could not extract text from ${filePath}`);
+        }
 
         if (
           decodeAndExtractText(Texts[0].R[0].T).includes(
@@ -307,6 +453,13 @@ async function parsePdfData(filePath) {
         ) {
           platform = "Amazon";
           extractedObj = parseAmazonInvoice(Texts);
+        } else if (
+          Texts.some(({ R }) =>
+            decodeAndExtractText(R[0].T).includes("Flipkart")
+          )
+        ) {
+          platform = "Flipkart";
+          extractedObj = parseFlipkartInvoice(Texts);
         }
 
         if (
@@ -315,7 +468,7 @@ async function parsePdfData(filePath) {
           ) ||
           Object.keys(extractedObj).length === 0
         ) {
-          console.log(extractedObj);
+          console.log({ extractedObj, platform });
           resolve(`Could not parse values from ${filePath}`);
         }
 
@@ -333,15 +486,16 @@ async function parsePdfData(filePath) {
         } = extractedObj;
 
         resolve({
-          Name: billToName,
+          "Customer name": billToName,
           Platform: platform,
-          "Order Number": orderId,
-          SKU: sku,
-          "Invoice Date": invoiceDate,
-          "End Date": endDate,
-          ASIN: asin,
+          "Order No": orderId,
+          sku: sku,
+          "Start date": invoiceDate,
+          "END date": endDate,
+          "Total warranty (in months)": 18 /* 18 is default value */,
+          "ASIN for feedback": asin,
           State: billToState,
-          "Zip Code": billToZipCode,
+          "Zip code": billToZipCode,
           Value: totalInvoiceAmount,
         });
       });
