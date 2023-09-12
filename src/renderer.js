@@ -89,7 +89,7 @@ uploadButton.addEventListener("click", async () => {
     const dialogBoxButton = createButton("OK");
     dialog.append(dialogBoxButton);
 
-    document.body.append(dialog);
+    document.body.insertBefore(dialog, document.body.firstChild);
 
     dialogBoxButton.addEventListener("click", () => {
       [

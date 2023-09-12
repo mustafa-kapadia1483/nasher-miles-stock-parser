@@ -372,8 +372,14 @@ function parseFlipkartInvoice(Texts) {
 
   for (let i = 0; i < productTexts.length; i++) {
     let { R } = productTexts[i];
-    if (R[0].T.toLowerCase().startsWith("fsn")) {
-      fsnAr.push(decodeAndExtractText(productTexts[++i].R[0].T));
+    let text = decodeAndExtractText(R[0].T);
+    if (text.toLowerCase().startsWith("fsn")) {
+      text = text.replaceAll(/fsn:\s+/gi, "");
+      if (text.length > 0) {
+        fsnAr.push(text);
+      } else {
+        fsnAr.push(decodeAndExtractText(productTexts[++i].R[0].T));
+      }
     }
   }
 
@@ -493,7 +499,7 @@ async function parsePdfData(filePath) {
           "Start date": invoiceDate,
           "END date": endDate,
           "Total warranty (in months)": 18 /* 18 is default value */,
-          "ASIN for feedback": asin,
+          "NM ASIN": asin,
           State: billToState,
           "Zip code": billToZipCode,
           Value: totalInvoiceAmount,
