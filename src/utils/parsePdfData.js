@@ -334,8 +334,8 @@ function parseFlipkartInvoice(Texts) {
 
   let billToName = addressAr.shift();
 
-  let billToAddress = addressAr.join("");
-  let stateZip = addressAr.at(-1);
+  let billToAddress = addressAr.join("").trim();
+  let stateZip = billToAddress.split(".").at(-1);
   let billToZipCode = stateZip.match(/\d{6}/g)[0];
 
   let stateZipArr = stateZip.split(/\s+/);

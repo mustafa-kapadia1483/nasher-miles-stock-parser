@@ -1,11 +1,13 @@
 const { ipcRenderer } = require("electron");
-const path = require("path");
 
 const uploadButton = document.getElementById("upload-button");
-const updatePayments = document.getElementById("update-payments");
 
 uploadButton.addEventListener("click", async () => {
   const result = await ipcRenderer.invoke("showDialog");
+  if (result.filePaths.length == 0) {
+    return;
+  }
+  uploadButton.disabled = true;
 
   const extractedData = await ipcRenderer.invoke(
     "parsePdfData",
@@ -102,6 +104,8 @@ uploadButton.addEventListener("click", async () => {
         dialogBoxButton,
       ].forEach(el => el.remove());
     });
+
+    uploadButton.disabled = false;
   });
 });
 
