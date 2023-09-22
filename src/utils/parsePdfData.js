@@ -2,8 +2,11 @@ const parseDate = require("./strftime");
 
 const amazonAsinSkuMappingJson = require("../../amazon-asin-sku-mapping.json");
 const flipkartFsnSkuMappingJson = require("../../flipkart-fsn-sku-mapping.json");
+const myntraFsnSkuMappingJson = require("../../myntra-asin-sku-mapping.json");
+const stateMappingJson = require("../../state-mapping.json");
 
-const DATE_REGEX = /(\d{1,4})[\p{Dash}.\/](\d{1,2})[\p{Dash}.\/](\d{2,4})/gmu;
+const DATE_REGEX =
+  /(\d{1,4})[\s\p{Dash}.\/](\d{1,2}|\w+)[\s\p{Dash}.\/](\d{2,4})/gmu;
 
 function addDays(date, days) {
   var result = new Date(
@@ -408,6 +411,120 @@ function parseFlipkartInvoice(Texts) {
   };
 }
 
+function parseMyntraInvoice(Texts) {
+  let invoiceDate = "",
+    orderId = "";
+
+  for (let i in Texts) {
+    let { R } = Texts[i];
+
+    if (orderId.length == 0) {
+      let text = decodeAndExtractText(R[0].T, /order\s+number/gi);
+      console.log(text);
+
+      if (text.length > 0) {
+        orderId = decodeAndExtractText(Texts[i - 1]?.R[0].T, /[\w-]+/g);
+      }
+    } else if (invoiceDate.length == 0) {
+      let text = decodeAndExtractText(R[0].T, /invoice\s+date/gi);
+      text = decodeAndExtractText(Texts[i - 1]?.R[0].T, DATE_REGEX);
+
+      if (text?.length > 0) {
+        invoiceDate = text;
+      }
+    }
+
+    if (invoiceDate.length > 0 && orderId.length > 0) {
+      break;
+    }
+  }
+
+  const endDate = getEndDate(new Date(invoiceDate));
+
+  const BILL_TO_TEXT_INDEX = Texts.findIndex(({ R }) =>
+    decodeAndExtractText(R[0].T).toLowerCase().startsWith("bill to")
+  );
+
+  const CUSTOMER_TYPE_TEXT_INDEX =
+    BILL_TO_TEXT_INDEX +
+    Texts.slice(BILL_TO_TEXT_INDEX).findIndex(({ R }) =>
+      decodeAndExtractText(R[0].T).toLowerCase().startsWith("customer type")
+    );
+
+  let addressAr = Texts.slice(BILL_TO_TEXT_INDEX + 1, CUSTOMER_TYPE_TEXT_INDEX);
+  console.log(addressAr);
+  for (let i in addressAr) {
+    addressAr[i] = decodeAndExtractText(addressAr[i].R[0].T);
+  }
+
+  let billToName = addressAr.shift();
+  let billToAddress = addressAr.join("").trim();
+  billToAddress = billToAddress.replaceAll(/[^\w\s,\p{Dash}]/gmu, "");
+
+  let billToState = billToAddress.match(/\b\w{2}\b/g)?.at(-1);
+  let billToZipCode = billToAddress.match(/\d{6}/g).at(-1);
+
+  /* State shorthand is present in invoice, using mapping file to give full name of the state */
+  if (stateMappingJson.hasOwnProperty(billToState)) {
+    billToState = stateMappingJson[billToState];
+  }
+
+  const FIRST_RS_TEXT_INDEX = Texts.findIndex(({ R }) =>
+    decodeAndExtractText(R[0].T).toLowerCase().endsWith("rs")
+  );
+  let totalInvoiceAmount = decodeAndExtractText(
+    Texts[FIRST_RS_TEXT_INDEX + 1].R[0].T
+  );
+
+  const CESS_TEXT_INDEX = Texts.findIndex(({ R }) =>
+    decodeAndExtractText(R[0].T).toLowerCase().startsWith("cess")
+  );
+
+  const productListTextsAr = Texts.slice(
+    CESS_TEXT_INDEX + 2,
+    FIRST_RS_TEXT_INDEX
+  );
+
+  let asinAr = [];
+  let skuAr = [];
+  for (let { R } of productListTextsAr) {
+    /*  */
+    let asin = decodeAndExtractText(R[0].T, /\w{16}/g);
+    if (asin.length > 0) {
+      let sku = decodeAndExtractText(R[0].T)
+        .match(/(?<=\()[\W\w_]+(?=\))/gm)
+        ?.at(-1);
+      if (sku?.length > 2) {
+        skuAr.push(sku);
+      } else {
+        skuAr.push("NA");
+      }
+      asinAr.push(asin);
+    }
+  }
+
+  for (let i in asinAr) {
+    if (skuAr[i] == "NA" && myntraFsnSkuMappingJson.hasOwnProperty(asinAr[i])) {
+      skuAr[i] = myntraFsnSkuMappingJson[asinAr[i]];
+    }
+  }
+
+  let asin = asinAr.join(",");
+  let sku = skuAr.join(",");
+  return {
+    orderId,
+    invoiceDate,
+    endDate,
+    billToName,
+    billToAddress,
+    billToState,
+    billToZipCode,
+    totalInvoiceAmount,
+    asin,
+    sku,
+  };
+}
+
 async function parsePdfData(filePath) {
   const PDFParser = await import("pdf2json/pdfparser.js");
   const pdfParser = new PDFParser.default();
@@ -466,6 +583,13 @@ async function parsePdfData(filePath) {
         ) {
           platform = "Flipkart";
           extractedObj = parseFlipkartInvoice(Texts);
+        } else if (
+          Texts.some(({ R }) =>
+            decodeAndExtractText(R[0].T).toLowerCase().includes("myntra")
+          )
+        ) {
+          platform = "Myntra";
+          extractedObj = parseMyntraInvoice(Texts);
         }
 
         if (
