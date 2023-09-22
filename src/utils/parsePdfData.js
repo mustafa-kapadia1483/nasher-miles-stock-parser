@@ -3,6 +3,8 @@ const parseDate = require("./strftime");
 const amazonAsinSkuMappingJson = require("../../amazon-asin-sku-mapping.json");
 const flipkartFsnSkuMappingJson = require("../../flipkart-fsn-sku-mapping.json");
 const myntraFsnSkuMappingJson = require("../../myntra-asin-sku-mapping.json");
+const tataCliqFsnSkuMappingJson = require("../../tataCliq-asin-sku-mapping.json");
+
 const stateMappingJson = require("../../state-mapping.json");
 
 const DATE_REGEX =
@@ -525,6 +527,109 @@ function parseMyntraInvoice(Texts) {
   };
 }
 
+function parseTataCliqInvoice(Texts) {
+  let invoiceDate = "",
+    orderId = "";
+
+  for (let i in Texts) {
+    i = parseInt(i);
+    let { R } = Texts[i];
+
+    if (orderId.length == 0) {
+      let text = decodeAndExtractText(R[0].T, /order\s+no/gi);
+
+      if (text.length > 0) {
+        orderId = decodeAndExtractText(Texts[i + 1]?.R[0].T, /[\w-]+/g);
+      }
+    } else if (invoiceDate.length == 0) {
+      let text = decodeAndExtractText(R[0].T, /invoice\s+date/gi);
+
+      if (text?.length > 0) {
+        text = decodeAndExtractText(Texts[i + 1]?.R[0].T, DATE_REGEX);
+        invoiceDate = text;
+      }
+    }
+
+    if (invoiceDate.length > 0 && orderId.length > 0) {
+      break;
+    }
+  }
+
+  const endDate = getEndDate(new Date(invoiceDate));
+
+  const DELIVER_TO_TEXT_INDEX = Texts.findIndex(({ R }) =>
+    decodeAndExtractText(R[0].T).toLowerCase().startsWith("deliver to")
+  );
+
+  const FROM_TEXT_INDEX =
+    DELIVER_TO_TEXT_INDEX +
+    Texts.slice(DELIVER_TO_TEXT_INDEX).findIndex(({ R }) =>
+      decodeAndExtractText(R[0].T).toLowerCase().startsWith("from")
+    );
+
+  let addressAr = Texts.slice(DELIVER_TO_TEXT_INDEX + 1, FROM_TEXT_INDEX - 2);
+  for (let i in addressAr) {
+    addressAr[i] = decodeAndExtractText(addressAr[i].R[0].T);
+  }
+
+  const billToName = addressAr.shift();
+  const billToAddress = addressAr.join("");
+
+  const stateZip = addressAr.at(-1);
+  let billToZipCode = stateZip.match(/\d{6}/g)[0];
+  let billToState = stateZip.match(/(?<=\()\w+(?=\))/g)[0];
+
+  const NET_PRICE_RECOVERABLE_TEXT_INDEX = Texts.findIndex(({ R }) =>
+    decodeAndExtractText(R[0].T).toLowerCase().endsWith("recoverable")
+  );
+
+  const ONLY_TOTAL_TEXT_INDEX =
+    NET_PRICE_RECOVERABLE_TEXT_INDEX +
+    Texts.slice(NET_PRICE_RECOVERABLE_TEXT_INDEX).findIndex(
+      ({ R }) => decodeAndExtractText(R[0].T).toLowerCase() == "total"
+    );
+
+  const totalInvoiceAmount = Texts[ONLY_TOTAL_TEXT_INDEX + 1].R[0].T;
+  let productListTextsAr = Texts.slice(
+    NET_PRICE_RECOVERABLE_TEXT_INDEX + 1,
+    ONLY_TOTAL_TEXT_INDEX
+  );
+
+  let asinAr = [];
+  let skuAr = [];
+  for (let { R } of productListTextsAr) {
+    /*  */
+    let asin = decodeAndExtractText(R[0].T, /\w{10}(?=\/)/g);
+    if (asin.length > 0) {
+      asinAr.push(asin);
+    }
+  }
+
+  for (let i in asinAr) {
+    if (tataCliqFsnSkuMappingJson.hasOwnProperty(asinAr[i])) {
+      skuAr[i] = tataCliqFsnSkuMappingJson[asinAr[i]];
+    } else {
+      skuAr[i] = "NA";
+    }
+  }
+
+  let asin = asinAr.join(",");
+  let sku = skuAr.join(",");
+
+  return {
+    orderId,
+    invoiceDate,
+    endDate,
+    billToName,
+    billToAddress,
+    billToState,
+    billToZipCode,
+    totalInvoiceAmount,
+    asin,
+    sku,
+  };
+}
+
 async function parsePdfData(filePath) {
   const PDFParser = await import("pdf2json/pdfparser.js");
   const pdfParser = new PDFParser.default();
@@ -590,6 +695,13 @@ async function parsePdfData(filePath) {
         ) {
           platform = "Myntra";
           extractedObj = parseMyntraInvoice(Texts);
+        } else if (
+          Texts.some(({ R }) =>
+            decodeAndExtractText(R[0].T).toLowerCase().includes("tatacliq")
+          )
+        ) {
+          platform = "TataCliq";
+          extractedObj = parseTataCliqInvoice(Texts);
         }
 
         if (
