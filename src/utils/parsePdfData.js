@@ -1,4 +1,5 @@
 const parseDate = require("./strftime");
+const titleCase = require("./titleCase");
 
 const amazonAsinSkuMappingJson = require("../../amazon-asin-sku-mapping.json");
 const flipkartFsnSkuMappingJson = require("../../flipkart-fsn-sku-mapping.json");
@@ -630,6 +631,56 @@ function parseTataCliqInvoice(Texts) {
   };
 }
 
+function parseJioMartInvoice(text) {
+  const invoiceDate = text.match(
+    /(?<=invoicedate:)(\d{1,4})[\s\p{Dash}.\/](\d{1,2}|\w+)[\s\p{Dash}.\/](\d{2,4})/gimu
+  )[0];
+
+  const orderId = text.match(/(?<=orderid:)\w{18}/gimu)[0];
+
+  const billToName = text.match(/(?<=ShippingAddress)[A-Z][a-z]+/gmu)?.[0],
+    billToState = titleCase(text.match(/(?<=\d{6},)\w+(?=,)/gimu)[0]),
+    billToZipCode = text.match(/\d{6}(?=,\w+,)/gimu).at(-1);
+
+  const totalInvoiceAmount = text.match(/(?<=total₹)[\d,.]+/gimu)[0];
+
+  let invoiceDateArr = invoiceDate.split(/[\p{Dash}.\/]/gu);
+  const endDate = getEndDate(
+    new Date(invoiceDateArr[2], invoiceDateArr[1] - 1, invoiceDateArr[0])
+  );
+
+  console.log({ text });
+
+  const asinAr = text.match(/(?<=sku:)[\w\s]+(?=\))/gimu);
+  for (let i in asinAr) {
+    asinAr[i] = asinAr[i].replaceAll(/\s+/g, "");
+  }
+  const asin = asinAr.join(",");
+
+  let skuAr = [];
+  for (let i = 0; i < asinAr.length; i++) {
+    if (amazonAsinSkuMappingJson.hasOwnProperty(asin)) {
+      skuAr.push(amazonAsinSkuMappingJson[asin][0]["seller-sku"]);
+    } else {
+      skuAr.push("NA");
+    }
+  }
+
+  const sku = skuAr.join(",");
+
+  return {
+    orderId,
+    invoiceDate,
+    endDate,
+    asin,
+    sku,
+    billToName,
+    billToState,
+    billToZipCode,
+    totalInvoiceAmount,
+  };
+}
+
 async function parsePdfData(filePath) {
   const PDFParser = await import("pdf2json/pdfparser.js");
   const pdfParser = new PDFParser.default();
@@ -653,6 +704,11 @@ async function parsePdfData(filePath) {
         // });
 
         const { Texts } = pdfData.Pages[0];
+        let text = "";
+        Texts.forEach(({ R }) => {
+          text += R[0].T;
+        });
+        text = decodeURIComponent(text);
 
         var fs = require("fs");
         fs.writeFile(
@@ -702,6 +758,9 @@ async function parsePdfData(filePath) {
         ) {
           platform = "TataCliq";
           extractedObj = parseTataCliqInvoice(Texts);
+        } else if (text.toLowerCase().includes("jiomart")) {
+          platform = "JioMart";
+          extractedObj = parseJioMartInvoice(text);
         }
 
         if (
