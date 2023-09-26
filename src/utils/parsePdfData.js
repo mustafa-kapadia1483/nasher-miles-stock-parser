@@ -414,6 +414,47 @@ function parseFlipkartInvoice(Texts) {
   };
 }
 
+function parseFlipkartWithoutFsnInvoice(text) {
+  const orderId = text.match(/(?<=orderid:)\w{20}/gimu)?.[0];
+  const invoiceDate = text.match(
+    /(?<=invoicedate:)(\d{1,4})[\s\p{Dash}.\/](\d{1,2}|\w+)[\s\p{Dash}.\/](\d{2,4})/gimu
+  )[0];
+
+  const invoiceDateArr = invoiceDate.split(/[\p{Dash}.\/]/gu);
+  const endDate = getEndDate(
+    new Date(invoiceDateArr[2], invoiceDateArr[1] - 1, invoiceDateArr[0])
+  );
+
+  const billToName = text
+    .match(/(?<=BillingAddress)\w+/gmu)?.[0]
+    .replace(/([A-Z])/g, " $1")
+    .trim();
+
+  const billToZipCode = text.match(/\d{6}(?=,in\p{Dash})/gimu)?.[0];
+
+  let billToState = text.match(/(?<=\d{6},in\p{Dash})\w{2}/gimu)?.at(-1);
+  if (stateMappingJson.hasOwnProperty(billToState)) {
+    billToState = stateMappingJson[billToState];
+  }
+
+  const totalInvoiceAmount = text.match(/(?<=totalp[\w\s:]+)\d+.\d+/gimu)?.[0];
+
+  const skuAr = text.match(/(?<=\|)[\w_\s]+(?=\|)/gmu);
+  const sku = skuAr?.join(",");
+
+  return {
+    orderId,
+    invoiceDate,
+    endDate,
+    billToName,
+    billToState,
+    billToZipCode,
+    totalInvoiceAmount,
+    sku,
+    asin: "NA",
+  };
+}
+
 function parseMyntraInvoice(Texts) {
   let invoiceDate = "",
     orderId = "";
@@ -709,6 +750,7 @@ async function parsePdfData(filePath) {
           text += R[0].T;
         });
         text = decodeURIComponent(text);
+        console.log({ text });
 
         var fs = require("fs");
         fs.writeFile(
@@ -761,6 +803,9 @@ async function parsePdfData(filePath) {
         } else if (text.toLowerCase().includes("jiomart")) {
           platform = "JioMart";
           extractedObj = parseJioMartInvoice(text);
+        } else if (text.match(/od\w{18}/gi) !== null) {
+          platform = "Flipkart";
+          extractedObj = parseFlipkartWithoutFsnInvoice(text);
         }
 
         if (
