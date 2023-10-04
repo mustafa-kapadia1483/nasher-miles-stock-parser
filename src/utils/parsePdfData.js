@@ -886,18 +886,20 @@ async function parsePdfData(filePath) {
           extractedObj = parseAmazonInvoice(Texts);
         } else if (
           Texts.some(({ R }) =>
+            decodeAndExtractText(R[0].T)
+              .toLowerCase()
+              .includes("www.myntra.com")
+          )
+        ) {
+          platform = "Myntra";
+          extractedObj = parseMyntraInvoice(Texts);
+        } else if (
+          Texts.some(({ R }) =>
             decodeAndExtractText(R[0].T).includes("Flipkart")
           )
         ) {
           platform = "Flipkart";
           extractedObj = parseFlipkartInvoice(Texts);
-        } else if (
-          Texts.some(({ R }) =>
-            decodeAndExtractText(R[0].T).toLowerCase().includes("myntra")
-          )
-        ) {
-          platform = "Myntra";
-          extractedObj = parseMyntraInvoice(Texts);
         } else if (
           Texts.some(({ R }) =>
             decodeAndExtractText(R[0].T).toLowerCase().includes("tatacliq")
