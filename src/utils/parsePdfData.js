@@ -5,6 +5,7 @@ const amazonAsinSkuMappingJson = require("../../amazon-asin-sku-mapping.json");
 const flipkartFsnSkuMappingJson = require("../../flipkart-fsn-sku-mapping.json");
 const myntraFsnSkuMappingJson = require("../../myntra-asin-sku-mapping.json");
 const tataCliqFsnSkuMappingJson = require("../../tataCliq-asin-sku-mapping.json");
+const ajioAsinSkuMappingJson = require("../../ajio-asin-sku-mapping.json");
 
 const stateMappingJson = require("../../state-mapping.json");
 
@@ -699,7 +700,7 @@ function parseJioMartInvoice(text) {
   const asin = asinAr.join(",");
 
   let skuAr = [];
-  for (let i = 0; i < asinAr.length; i++) {
+  for (let asin of asinAr) {
     if (amazonAsinSkuMappingJson.hasOwnProperty(asin)) {
       skuAr.push(amazonAsinSkuMappingJson[asin][0]["seller-sku"]);
     } else {
@@ -718,6 +719,110 @@ function parseJioMartInvoice(text) {
     billToName,
     billToState,
     billToZipCode,
+    totalInvoiceAmount,
+  };
+}
+
+function parseAjioinvoice(Texts, text) {
+  let invoiceDate = "",
+    orderId = "",
+    billToName = "",
+    totalInvoiceAmount = "";
+
+  let DATED_TEXT_INDEX = -1,
+    RECIPIENT_ADDRESS_TEXT_INDEX = -1;
+
+  for (let i in Texts) {
+    i = parseInt(i);
+    let { R } = Texts[i];
+
+    if (billToName.length == 0) {
+      let text = decodeAndExtractText(
+        R[0].T,
+        /(?<=recipient\saddress\W)[\w\s]+/gim
+      );
+
+      if (text?.length > 0) {
+        billToName = titleCase(text.trim());
+        RECIPIENT_ADDRESS_TEXT_INDEX = i;
+      }
+    }
+
+    if (orderId.length == 0) {
+      let text = decodeAndExtractText(R[0].T, /^order$/gim);
+
+      if (text.length > 0) {
+        orderId = decodeAndExtractText(Texts[i + 1]?.R[0].T, /\w+/g);
+      }
+    }
+    if (invoiceDate.length == 0) {
+      let text = decodeAndExtractText(R[0].T);
+
+      if (text.toLowerCase().includes("dated")) {
+        text = decodeAndExtractText(R[0].T, DATE_REGEX);
+        invoiceDate = text;
+        DATED_TEXT_INDEX = i;
+      }
+    }
+
+    if (totalInvoiceAmount.length == 0) {
+      let text = decodeAndExtractText(R[0].T);
+      if (text.includes("Total Invoice Value")) {
+        totalInvoiceAmount = decodeAndExtractText(Texts[i + 2]?.R[0].T, /\w+/g);
+      }
+    }
+  }
+
+  let invoiceDateArr = invoiceDate.split(/[\p{Dash}.\/]/gu);
+  const endDate = getEndDate(
+    new Date(invoiceDateArr[2], invoiceDateArr[1] - 1, invoiceDateArr[0])
+  );
+
+  let addressAr = Texts.slice(
+    DATED_TEXT_INDEX + 1,
+    RECIPIENT_ADDRESS_TEXT_INDEX
+  );
+
+  console.log(addressAr);
+  for (let i in addressAr) {
+    addressAr[i] = decodeAndExtractText(addressAr[i].R[0].T);
+  }
+
+  const billToAddress = addressAr.join(" ");
+  const billToZipCode = billToAddress.match(/\d{6}/g).at(-1);
+  let billToState = billToAddress
+    .match(/\w+(?=\s+\d{6})/gm)
+    ?.at(-1)
+    .substring(0, 2);
+
+  if (stateMappingJson.hasOwnProperty(billToState)) {
+    billToState = stateMappingJson[billToState];
+  }
+
+  const asinAr = text.match(/(?<=\()\d{13}(?=\))/gm);
+  const asin = asinAr?.join(",");
+
+  let skuAr = [];
+  for (let asin of asinAr) {
+    if (ajioAsinSkuMappingJson.hasOwnProperty(asin)) {
+      skuAr.push(ajioAsinSkuMappingJson[asin]);
+    } else {
+      skuAr.push("NA");
+    }
+  }
+
+  const sku = skuAr.join(",");
+
+  return {
+    orderId,
+    invoiceDate,
+    endDate,
+    billToName,
+    billToState,
+    billToAddress,
+    billToZipCode,
+    asin,
+    sku,
     totalInvoiceAmount,
   };
 }
@@ -800,6 +905,13 @@ async function parsePdfData(filePath) {
         ) {
           platform = "TataCliq";
           extractedObj = parseTataCliqInvoice(Texts);
+        } else if (
+          Texts.some(({ R }) =>
+            decodeAndExtractText(R[0].T).toLowerCase().includes("ajio")
+          )
+        ) {
+          platform = "Ajio";
+          extractedObj = parseAjioinvoice(Texts, text);
         } else if (text.toLowerCase().includes("jiomart")) {
           platform = "JioMart";
           extractedObj = parseJioMartInvoice(text);
@@ -835,11 +947,11 @@ async function parsePdfData(filePath) {
           "Customer name": billToName,
           Platform: platform,
           "Order No": orderId,
-          sku: sku,
+          sku: sku?.trim(),
           "Start date": invoiceDate,
           "END date": endDate,
           "Total warranty (in months)": 18 /* 18 is default value */,
-          "NM ASIN": asin,
+          "ASIN for feedback": asin?.trim(),
           State: billToState,
           "Zip code": billToZipCode,
           Value: totalInvoiceAmount,
