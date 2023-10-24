@@ -97,3 +97,8 @@ secrets.json
 # Test files
 test.json
 test.txt
+
+# Files to be generated
+lights-asin-parent-child-mapping.json
+stock-report.json
+stockJournal.xls

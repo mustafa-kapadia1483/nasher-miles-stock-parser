@@ -11,6 +11,8 @@ const path = require("path");
 const parsePdfData = require("./utils/parsePdfData");
 const updateGoogleSheets = require("./utils/googleSpreadsheetUtils");
 const secrets = require("../secrets.json");
+const createLightsMappingJSON = require("./utils/createLightsMappingJSON");
+const generateStockJournal = require("./utils/generateStockJournal");
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -68,8 +70,8 @@ ipcMain.handle("showDialog", async () => {
     buttonLabel: "Upload PDF",
     filters: [
       {
-        name: "PDFs",
-        extensions: ["pdf"],
+        name: "xls",
+        extensions: ["xls", "xlsx"],
       },
     ],
     properties: ["openFile", "dontAddToRecent", "multiSelections"],
@@ -92,15 +94,20 @@ ipcMain.handle("parsePdfData", async (e, pdfFilePaths) => {
   return result;
 });
 
-ipcMain.handle(
-  "updateGoogleSheets",
-  async (e, googleSpreadsheetId, sheetName, extractedData) => {
-    const result = await updateGoogleSheets(
-      secrets,
-      googleSpreadsheetId,
-      sheetName,
-      extractedData
-    );
-    return result;
+ipcMain.handle("createLightsMappingJSON", async (e, excelFilePath) => {
+  const result = [];
+  let extractedData = await createLightsMappingJSON(excelFilePath);
+  if (typeof extractedData == "string") {
+    new Notification({ title: "Parsing Failed", body: extractedData }).show();
+  } else {
+    result.push(extractedData);
   }
-);
+  console.log({ extractedData });
+
+  return extractedData;
+});
+
+ipcMain.handle("generateStockJournal", async e => {
+  let result = await generateStockJournal();
+  console.log(result);
+});

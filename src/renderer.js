@@ -1,112 +1,45 @@
 const { ipcRenderer } = require("electron");
 
-const uploadButton = document.getElementById("upload-button");
+const uploadStockSummaryButton = document.getElementById(
+  "upload-stock-summary-button"
+);
+const uploadLightsMappingExcelButton = document.querySelector(
+  "#upload-lights-mapping-file-button"
+);
+const generateStockJournalButton = document.querySelector(
+  "#generate-stock-journal-button"
+);
 
-uploadButton.addEventListener("click", async () => {
+uploadLightsMappingExcelButton.addEventListener("click", async () => {
   const result = await ipcRenderer.invoke("showDialog");
   if (result.filePaths.length == 0) {
     return;
   }
-  uploadButton.disabled = true;
+  await ipcRenderer.invoke("createLightsMappingJSON", result.filePaths[0]);
+});
+
+generateStockJournalButton.addEventListener("click", async () => {
+  await ipcRenderer.invoke("generateStockJournal");
+});
+
+uploadLightsMappingExcelButton.addEventListener("click", async () => {
+  const result = await ipcRenderer.invoke("showDialog");
+  if (result.filePaths.length == 0) {
+    return;
+  }
+  await ipcRenderer.invoke("createLightsMappingJSON", result.filePaths[0]);
+});
+
+uploadStockSummaryButton.addEventListener("click", async () => {
+  const result = await ipcRenderer.invoke("showDialog");
+  if (result.filePaths.length == 0) {
+    return;
+  }
 
   const extractedData = await ipcRenderer.invoke(
     "parsePdfData",
     result.filePaths
   );
-  const table = createTable(extractedData);
-
-  const row = document.createElement("div");
-  row.className = "row";
-
-  const col = document.createElement("div");
-  col.className = "col";
-
-  row.append(col);
-  col.append(table);
-  document.querySelector(".container-fluid").append(row);
-
-  const buttonContainer = document.querySelector(".button-container");
-  const uploadDataButton = createButton("Upload Data to Sheets", "ms-action2");
-  buttonContainer.append(uploadDataButton);
-
-  const inputsRow = document.getElementById("inputs-row");
-
-  const storedSpreadhsheetSheetLink = localStorage.getItem("sheetLink") ?? "";
-  const col1 = createCol();
-  col1.append(
-    createInputGroup(
-      "Spreadsheet Link",
-      "sheet-link",
-      "text",
-      storedSpreadhsheetSheetLink
-    )
-  );
-
-  const storedSheetName = localStorage.getItem("sheetName") ?? "";
-  const col2 = createCol();
-  col2.append(
-    createInputGroup("Sheet Name", "sheet-name", "text", storedSheetName)
-  );
-
-  inputsRow.append(col1, col2);
-
-  uploadDataButton.addEventListener("click", async () => {
-    const spreadsheeLinkInput = document.getElementById("sheet-link");
-    const sheetNameInput = document.getElementById("sheet-name");
-
-    const spreadsheetID = spreadsheeLinkInput?.value
-      ?.replace("https://", "")
-      ?.split("/")[3];
-    console.log(spreadsheetID);
-    const sheetName = sheetNameInput.value;
-
-    if (sheetName.length <= 0 && spreadsheetID.length <= 0) return;
-    const uploadResult = await ipcRenderer.invoke(
-      "updateGoogleSheets",
-      spreadsheetID,
-      sheetName,
-      extractedData
-    );
-
-    if (!(uploadResult === "success")) {
-      alert(uploadResult);
-      console.log(uploadResult);
-      return;
-    }
-
-    localStorage.setItem("sheetLink", spreadsheeLinkInput?.value);
-    localStorage.setItem("sheetName", sheetNameInput?.value);
-
-    const dialog = createDialogBox();
-    const p = document.createElement("p");
-    p.innerHTML = `${extractedData?.length} orders have been uploaded. <a href="${spreadsheeLinkInput.value}" target="_blank">Click here to open</a>`;
-
-    dialog.append(p);
-
-    const form = document.createElement("form");
-    form.setAttribute("method", "dialog");
-
-    dialog.append(form);
-
-    const dialogBoxButton = createButton("OK");
-    dialog.append(dialogBoxButton);
-
-    document.body.insertBefore(dialog, document.body.firstChild);
-
-    dialogBoxButton.addEventListener("click", () => {
-      [
-        row,
-        uploadDataButton,
-        col1,
-        col2,
-        dialog,
-        form,
-        dialogBoxButton,
-      ].forEach(el => el.remove());
-    });
-
-    uploadButton.disabled = false;
-  });
 });
 
 function createTable(extractedData) {
