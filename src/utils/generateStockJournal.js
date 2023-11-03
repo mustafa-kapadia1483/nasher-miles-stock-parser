@@ -57,7 +57,7 @@ async function generateStockJournal() {
 
   for (let warehouse of warehouseArray) {
     for (let productObj of stockSummaryJson[warehouse]) {
-      const { productName, quantity, rate } = productObj;
+      const { productName, quantity, rate, fullname } = productObj;
       if (quantity < 0) {
         const lightMappingJson = lightsAsinParentChildMappingJson[productName];
         if (lightMappingJson) {
@@ -76,7 +76,7 @@ async function generateStockJournal() {
 
           if (childProductObj) {
             const {
-              productName: childProductName,
+              fullname: childProductName,
               minimumChildQuanity: childQuantity,
               rate: childRate,
               warehouse: childWarehouse,
@@ -87,7 +87,7 @@ async function generateStockJournal() {
             const stockJournalInObjet = {
               Date: parseDate("%d/%b/%Y"),
               VoucherType: parseDate("STN/%d%m%y/01"),
-              "Item Name": productName,
+              "Item Name": fullname,
               Unit: "Pcs",
               Godown: warehouse,
               Type: "in",
@@ -135,7 +135,7 @@ async function generateStockJournal() {
     worksheet.addRow(stockJournalObj);
   }
 
-  await workbook.csv.writeFile("stockJournal.xls");
+  await workbook.xlsx.writeFile("stockJournal.xlsx");
 }
 
 module.exports = generateStockJournal;

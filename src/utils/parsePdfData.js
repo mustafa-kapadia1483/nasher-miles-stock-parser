@@ -33,15 +33,12 @@ async function parsePdfData(filePath) {
 
       console.log({ productName });
       if (productName) {
-        let quantity = stockSummaryWorksheetRow.getCell(2).value;
-        let rate = stockSummaryWorksheetRow.getCell(3).value;
-        let value = stockSummaryWorksheetRow.getCell(4).value;
-
         productStockObj = {
           productName,
-          quantity,
-          rate,
-          value,
+          quantity: stockSummaryWorksheetRow.getCell(2).value,
+          rate: stockSummaryWorksheetRow.getCell(3).value,
+          value: stockSummaryWorksheetRow.getCell(4).value,
+          fullname: stockSummaryWorksheetRow.getCell(1).value,
         };
       } else {
         row = 0;
