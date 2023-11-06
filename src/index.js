@@ -83,74 +83,31 @@ ipcMain.handle("showDialog", async () => {
 
 ipcMain.handle(
   "generateStockSummaryJson",
-  async (e, pdfFilePaths, warehouseAliasList) => {
-    const result = [];
-    for (let pdfFilePath of pdfFilePaths) {
-      let result = await generateStockSummaryJson(
-        pdfFilePath,
-        warehouseAliasList
-      );
-      console.log({ result });
-      if (result.status == "failed") {
-        new Notification({
-          title: "Parsing Failed",
-          body: result.message,
-        }).show();
-      } else {
-        new Notification({
-          title: "Parsing Success",
-          body: result.message,
-        }).show();
-      }
-    }
+  async (e, pdfFilePath, warehouseAliasList) => {
+    const result = await generateStockSummaryJson(
+      pdfFilePath,
+      warehouseAliasList
+    );
+    console.log({ result });
     return result;
   }
 );
 
 ipcMain.handle("createLightsMappingJSON", async (e, excelFilePath) => {
-  const result = [];
-  let extractedData = await createLightsMappingJSON(excelFilePath);
-  if (typeof extractedData == "string") {
-    new Notification({ title: "Parsing Failed", body: extractedData }).show();
-  } else {
-    result.push(extractedData);
-  }
-  console.log({ extractedData });
-
-  return extractedData;
+  const result = await createLightsMappingJSON(excelFilePath);
+  return result;
 });
 
 ipcMain.handle("generateStockJournalLightPacks", async e => {
-  let result = await generateStockJournalLightPacks();
-  if (result.status == "failed") {
-    new Notification({
-      title: "Stock Journal creation Failed",
-      body: result.message,
-    }).show();
-  } else {
-    new Notification({
-      title: "Stock Journal creation Success",
-      body: result.message,
-    }).show();
-  }
+  const result = await generateStockJournalLightPacks();
   console.log(result);
+  return result;
 });
 
 ipcMain.handle(
   "generateStockJournalWarehouseAliasNegativeAdjustment",
   async e => {
-    let result = await generateStockJournalWarehouseAliasNegativeAdjustment();
-    if (result.status == "failed") {
-      new Notification({
-        title: "Stock Journal creation Failed",
-        body: result.message,
-      }).show();
-    } else {
-      new Notification({
-        title: "Stock Journal creation Success",
-        body: result.message,
-      }).show();
-    }
-    console.log(result);
+    const result = await generateStockJournalWarehouseAliasNegativeAdjustment();
+    return result;
   }
 );

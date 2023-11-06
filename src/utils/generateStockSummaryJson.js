@@ -93,7 +93,7 @@ async function generateStockSummaryJson(filePath, warehouseAliasList) {
 
     var fs = require("fs");
     fs.writeFile(
-      path.resolve() + "stock-report.json",
+      `${__dirname}/stock-report.json`,
       JSON.stringify(stockReportJson),
       function (err) {
         if (err) {
@@ -101,6 +101,8 @@ async function generateStockSummaryJson(filePath, warehouseAliasList) {
         }
       }
     );
+
+    console.log("Current directory:", __dirname);
 
     return { status: "success", message: "Stock report JSON created" };
   } catch (error) {

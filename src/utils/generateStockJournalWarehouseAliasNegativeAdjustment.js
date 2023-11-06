@@ -10,25 +10,12 @@ const reorderArrayToStartFromGivenIndex = function (array, index) {
 };
 
 async function generateStockJournalWarehouseAliasNegativeAdjustment() {
-  const lightsAsinParentChildMappingJsonPath =
-    "../../lights-asin-parent-child-mapping.json";
-  const stockReportJsonPath = "../../stock-report.json";
+  const stockReportJsonPath = "./stock-report.json";
 
-  if (
-    !fs.existsSync(
-      path.resolve(__dirname, lightsAsinParentChildMappingJsonPath)
-    )
-  ) {
-    return {
-      status: "failed",
-      message: "Lights asin parent child mapping data not uploaded",
-    };
-  }
   if (!fs.existsSync(path.resolve(__dirname, stockReportJsonPath))) {
     return { status: "failed", message: "Stock summary data not uploaded" };
   }
 
-  const lightsAsinParentChildMappingJson = require(lightsAsinParentChildMappingJsonPath);
   const stockSummaryJson = require(stockReportJsonPath);
 
   /* Create Obj of all products with negative stock values */
@@ -77,75 +64,6 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
     for (let productObj of stockSummaryJson[warehouse]) {
       const { productName, quantity, rate, fullName } = productObj;
       if (quantity < 0) {
-        // Lights pack adjustment logic
-        const lightMappingJson = lightsAsinParentChildMappingJson[productName];
-        // if (lightMappingJson) {
-        //   const childAsin = lightMappingJson["child asin"];
-
-        //   /* reorder array to first check in same warehouse */
-        //   const reorderedWarehouseArray = reorderArrayToStartFromGivenIndex(
-        //     warehouseArray,
-        //     warehouseArray.findIndex(wh => wh == warehouse)
-        //   );
-        //   const childProductObj = getChildProductObj(
-        //     childAsin,
-        //     Math.abs(quantity) *
-        //       parseInt(lightMappingJson["parent sku"].match(/\d+$/)?.[0]),
-        //     reorderedWarehouseArray
-        //   );
-
-        //   if (childProductObj) {
-        //     const {
-        //       fullName: childProductName,
-        //       minimumChildQuanity: childQuantity,
-        //       rate: childRate,
-        //       warehouse: childWarehouse,
-        //     } = childProductObj;
-
-        //     // console.log(childProductObj);
-
-        //     // If parent SKU is having negative stock & rate is provided then we multiply the rate of parent product x absolute of negative quantity then divide it by quantity of child product
-        //     let inStockRate = rate;
-
-        //     // If parent SKU is having negative stock & rate is not provided then in this case we take the rate of the positive product (child)
-        //     if (inStockRate == null) {
-        //       inStockRate = (
-        //         childRate *
-        //         (childQuantity / Math.abs(quantity))
-        //       ).toFixed(2);
-        //     }
-
-        //     const stockJournalInObjet = {
-        //       Date: parseDate("%d/%b/%Y"),
-        //       VoucherType: parseDate("STN/%d%m%y/01"),
-        //       "Item Name": fullName,
-        //       Unit: "Pcs",
-        //       Godown: warehouse,
-        //       Type: "in",
-        //       Qty: Math.abs(quantity),
-        //       Rate: inStockRate,
-        //     };
-
-        //     stockJournalArray.push(stockJournalInObjet);
-
-        //     const stockJournalOutObjet = {
-        //       Date: parseDate("%d/%b/%Y"),
-        //       VoucherType: parseDate("STN/%d%m%y/01"),
-        //       "Item Name": childProductName,
-        //       Unit: "Pcs",
-        //       Godown: childWarehouse,
-        //       Type: "out",
-        //       Qty: childQuantity,
-        //       Rate: (
-        //         (parseFloat(inStockRate) * Math.abs(quantity)) /
-        //         childQuantity
-        //       )?.toFixed(2),
-        //     };
-
-        //     stockJournalArray.push(stockJournalOutObjet);
-        //   }
-        // }
-
         const newWarehouseArray = warehouseArray.slice(0);
         newWarehouseArray.pop(warehouse);
 
@@ -168,7 +86,7 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
           const stockJournalInObjet = {
             Date: parseDate("%d/%b/%Y"),
             VoucherType: parseDate("STN/%d%m%y/01"),
-            "Item Name": fullName,
+            "Item Name": fullName.replaceAll(/\(\w{10}\)/gm, ""),
             Unit: "Pcs",
             Godown: warehouse,
             Type: "in",
@@ -181,7 +99,10 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
           const stockJournalOutObjet = {
             Date: parseDate("%d/%b/%Y"),
             VoucherType: parseDate("STN/%d%m%y/01"),
-            "Item Name": positiveQuantityProductName,
+            "Item Name": positiveQuantityProductName.replaceAll(
+              /\(\w{10}\)/gm,
+              ""
+            ),
             Unit: "Pcs",
             Godown: positiveQuantityWarehouse,
             Type: "out",

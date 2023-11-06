@@ -11,8 +11,8 @@ const reorderArrayToStartFromGivenIndex = function (array, index) {
 
 async function generateStockJournalLightPacks() {
   const lightsAsinParentChildMappingJsonPath =
-    "../../lights-asin-parent-child-mapping.json";
-  const stockReportJsonPath = "../../stock-report.json";
+    "./lights-asin-parent-child-mapping.json";
+  const stockReportJsonPath = "./stock-report.json";
 
   if (
     !fs.existsSync(
@@ -105,7 +105,7 @@ async function generateStockJournalLightPacks() {
             const stockJournalInObjet = {
               Date: parseDate("%d/%b/%Y"),
               VoucherType: parseDate("STN/%d%m%y/01"),
-              "Item Name": fullName,
+              "Item Name": fullName.replaceAll(/\(\w{10}\)/gm, ""),
               Unit: "Pcs",
               Godown: warehouse,
               Type: "in",
@@ -118,7 +118,7 @@ async function generateStockJournalLightPacks() {
             const stockJournalOutObjet = {
               Date: parseDate("%d/%b/%Y"),
               VoucherType: parseDate("STN/%d%m%y/01"),
-              "Item Name": childProductName,
+              "Item Name": childProductName.replaceAll(/\(\w{10}\)/gm, ""),
               Unit: "Pcs",
               Godown: childWarehouse,
               Type: "out",
