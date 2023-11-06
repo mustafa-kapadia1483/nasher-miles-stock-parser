@@ -1,8 +1,8 @@
 {
-  "name": "nasher-miles-invoice-parser",
-  "productName": "nasher-miles-invoice-parser",
+  "name": "nasher-miles-stock-parser",
+  "productName": "nasher-miles-stock-parser",
   "version": "1.0.1",
-  "description": "My Electron application description",
+  "description": "Parse stock summary & create stock journal for negative stock adjustments",
   "main": "src/index.js",
   "scripts": {
     "start": "electron-forge start",

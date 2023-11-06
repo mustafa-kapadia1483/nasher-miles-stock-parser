@@ -8,11 +8,11 @@ const {
 } = require("electron");
 const path = require("path");
 
-const parsePdfData = require("./utils/parsePdfData");
+const generateStockSummaryJson = require("./utils/generateStockSummaryJson");
 const updateGoogleSheets = require("./utils/googleSpreadsheetUtils");
 const secrets = require("../secrets.json");
 const createLightsMappingJSON = require("./utils/createLightsMappingJSON");
-const generateStockJournal = require("./utils/generateStockJournal");
+const generateStockJournalLightPacks = require("./utils/generateStockJournalLightPacks");
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -67,7 +67,7 @@ app.on("activate", () => {
 // Code to show dialog box for uploading pdf
 ipcMain.handle("showDialog", async () => {
   const result = await dialog.showOpenDialog({
-    buttonLabel: "Upload PDF",
+    buttonLabel: "Upload Excel",
     filters: [
       {
         name: "xls",
@@ -80,19 +80,31 @@ ipcMain.handle("showDialog", async () => {
   return result;
 });
 
-ipcMain.handle("parsePdfData", async (e, pdfFilePaths) => {
-  const result = [];
-  for (let pdfFilePath of pdfFilePaths) {
-    let extractedData = await parsePdfData(pdfFilePath);
-    console.log({ extractedData });
-    if (typeof extractedData == "string") {
-      new Notification({ title: "Parsing Failed", body: extractedData }).show();
-    } else {
-      result.push(extractedData);
+ipcMain.handle(
+  "generateStockSummaryJson",
+  async (e, pdfFilePaths, warehouseAliasList) => {
+    const result = [];
+    for (let pdfFilePath of pdfFilePaths) {
+      let result = await generateStockSummaryJson(
+        pdfFilePath,
+        warehouseAliasList
+      );
+      console.log({ result });
+      if (result.status == "failed") {
+        new Notification({
+          title: "Parsing Failed",
+          body: result.message,
+        }).show();
+      } else {
+        new Notification({
+          title: "Parsing Success",
+          body: result.message,
+        }).show();
+      }
     }
+    return result;
   }
-  return result;
-});
+);
 
 ipcMain.handle("createLightsMappingJSON", async (e, excelFilePath) => {
   const result = [];
@@ -107,7 +119,18 @@ ipcMain.handle("createLightsMappingJSON", async (e, excelFilePath) => {
   return extractedData;
 });
 
-ipcMain.handle("generateStockJournal", async e => {
-  let result = await generateStockJournal();
+ipcMain.handle("generateStockJournalLightPacks", async e => {
+  let result = await generateStockJournalLightPacks();
+  if (result.status == "failed") {
+    new Notification({
+      title: "Stock Journal creation Failed",
+      body: result.message,
+    }).show();
+  } else {
+    new Notification({
+      title: "Stock Journal creation Success",
+      body: result.message,
+    }).show();
+  }
   console.log(result);
 });

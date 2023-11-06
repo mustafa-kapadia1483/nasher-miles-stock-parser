@@ -1,4 +1,5 @@
 const { ipcRenderer } = require("electron");
+const warehouseStateMappingJson = require("./warehouse-state-mapping.json");
 
 const uploadStockSummaryButton = document.getElementById(
   "upload-stock-summary-button"
@@ -6,9 +7,27 @@ const uploadStockSummaryButton = document.getElementById(
 const uploadLightsMappingExcelButton = document.querySelector(
   "#upload-lights-mapping-file-button"
 );
-const generateStockJournalButton = document.querySelector(
-  "#generate-stock-journal-button"
+const generateStockJournalLightPacksButton = document.querySelector(
+  "#generate-stock-journal-light-packs-button"
 );
+
+const warehouseSelect = document.querySelector(`#warehouse-select`);
+
+const warehouseNames = Object.keys(warehouseStateMappingJson);
+for (let warehouseName of warehouseNames) {
+  const option = document.createElement("option");
+  option.value = warehouseName;
+  option.textContent = warehouseName;
+  warehouseSelect.append(option);
+}
+
+let selectedWarehouseName = "";
+
+warehouseSelect.addEventListener("change", e => {
+  selectedWarehouseName = e.target.selectedOptions[0].value;
+
+  console.log(warehouseStateMappingJson[selectedWarehouseName]);
+});
 
 uploadLightsMappingExcelButton.addEventListener("click", async () => {
   const result = await ipcRenderer.invoke("showDialog");
@@ -18,8 +37,8 @@ uploadLightsMappingExcelButton.addEventListener("click", async () => {
   await ipcRenderer.invoke("createLightsMappingJSON", result.filePaths[0]);
 });
 
-generateStockJournalButton.addEventListener("click", async () => {
-  await ipcRenderer.invoke("generateStockJournal");
+generateStockJournalLightPacksButton.addEventListener("click", async () => {
+  await ipcRenderer.invoke("generateStockJournalLightPacks");
 });
 
 uploadLightsMappingExcelButton.addEventListener("click", async () => {
@@ -36,10 +55,17 @@ uploadStockSummaryButton.addEventListener("click", async () => {
     return;
   }
 
+  uploadStockSummaryButton.disabled = true;
+  const loader = createLoader(uploadStockSummaryButton);
+
   const extractedData = await ipcRenderer.invoke(
-    "parsePdfData",
-    result.filePaths
+    "generateStockSummaryJson",
+    result.filePaths,
+    warehouseStateMappingJson[selectedWarehouseName] ?? []
   );
+
+  uploadStockSummaryButton.disabled = false;
+  loader.remove();
 });
 
 function createTable(extractedData) {
@@ -115,4 +141,12 @@ function createDialogBox(open = true) {
   dialog.setAttribute("open", open);
 
   return dialog;
+}
+
+function createLoader(parent = document.body) {
+  const div = document.createElement("div");
+  div.style.display = "inline-block";
+  div.dataset.loader = "timer";
+  parent.append(div);
+  return div;
 }

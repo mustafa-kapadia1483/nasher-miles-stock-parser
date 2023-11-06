@@ -3,7 +3,9 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Nasher Miles Invoice Parser</title>
+  <title>Nasher Miles Stock Parser</title>
+
+  <link rel="stylesheet" href="timer.css">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/dark-mode-switcher@0.0.1/dist/dark.min.js"></script>
   <link rel="stylesheet" type="text/css"
     href="https://cdn.jsdelivr.net/npm/minstyle.io@2.0.2/dist/css/minstyle.io.min.css">
@@ -16,11 +18,18 @@
       <div class="col button-container">
         <button id="upload-stock-summary-button" class="ms-action mt-4">Upload Stock Summary Excel</button>
         <button id="upload-lights-mapping-file-button" class="ms-secondary mt-4">Upload Lights Mapping Excel</button>
-        <button id="generate-stock-journal-button" class="ms-action2 mt-4">Generate Stock Journal</button>
+        <button id="generate-stock-journal-light-packs-button" class="ms-action2 mt-4">Generate Stock Journal</button>
       </div>
     </div>
     <div class="row mt-4" id="inputs-row">
+      <div class="col">
+        <label for="warehouse-choice">Choose location for which stock summary is being uploaded:</label>
 
+        <select name="warehouse-choice" id="warehouse-select">
+          <option value="">--Please choose an option--</option>
+        </select>
+
+      </div>
     </div>
   </div>
 </body>

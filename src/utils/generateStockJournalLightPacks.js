@@ -9,7 +9,7 @@ const reorderArrayToStartFromGivenIndex = function (array, index) {
   return start.concat(end); // Concat 2nd array to first and return the result.
 };
 
-async function generateStockJournal() {
+async function generateStockJournalLightPacks() {
   const lightsAsinParentChildMappingJsonPath =
     "../../lights-asin-parent-child-mapping.json";
   const stockReportJsonPath = "../../stock-report.json";
@@ -19,10 +19,13 @@ async function generateStockJournal() {
       path.resolve(__dirname, lightsAsinParentChildMappingJsonPath)
     )
   ) {
-    return "Lights asin parent child mapping data not uploaded";
+    return {
+      status: "failed",
+      message: "Lights asin parent child mapping data not uploaded",
+    };
   }
   if (!fs.existsSync(path.resolve(__dirname, stockReportJsonPath))) {
-    return "Stock summary data not uploaded";
+    return { status: "failed", message: "Stock summary data not uploaded" };
   }
 
   const lightsAsinParentChildMappingJson = require(lightsAsinParentChildMappingJsonPath);
@@ -55,10 +58,13 @@ async function generateStockJournal() {
     return null;
   }
 
+  // Stock adjustment logic
+
   for (let warehouse of warehouseArray) {
     for (let productObj of stockSummaryJson[warehouse]) {
-      const { productName, quantity, rate, fullname } = productObj;
+      const { productName, quantity, rate, fullName } = productObj;
       if (quantity < 0) {
+        // Lights pack adjustment logic
         const lightMappingJson = lightsAsinParentChildMappingJson[productName];
         if (lightMappingJson) {
           const childAsin = lightMappingJson["child asin"];
@@ -70,13 +76,14 @@ async function generateStockJournal() {
           );
           const childProductObj = getChildProductObj(
             childAsin,
-            Math.abs(quantity) * lightMappingJson["parent sku"].match(/\d$/)[0],
+            Math.abs(quantity) *
+              parseInt(lightMappingJson["parent sku"].match(/\d+$/)?.[0]),
             reorderedWarehouseArray
           );
 
           if (childProductObj) {
             const {
-              fullname: childProductName,
+              fullName: childProductName,
               minimumChildQuanity: childQuantity,
               rate: childRate,
               warehouse: childWarehouse,
@@ -84,15 +91,26 @@ async function generateStockJournal() {
 
             // console.log(childProductObj);
 
+            // If parent SKU is having negative stock & rate is provided then we multiply the rate of parent product x absolute of negative quantity then divide it by quantity of child product
+            let inStockRate = rate;
+
+            // If parent SKU is having negative stock & rate is not provided then in this case we take the rate of the positive product (child)
+            if (inStockRate == null) {
+              inStockRate = (
+                childRate *
+                (childQuantity / Math.abs(quantity))
+              ).toFixed(2);
+            }
+
             const stockJournalInObjet = {
               Date: parseDate("%d/%b/%Y"),
               VoucherType: parseDate("STN/%d%m%y/01"),
-              "Item Name": fullname,
+              "Item Name": fullName,
               Unit: "Pcs",
               Godown: warehouse,
               Type: "in",
               Qty: Math.abs(quantity),
-              Rate: rate,
+              Rate: inStockRate,
             };
 
             stockJournalArray.push(stockJournalInObjet);
@@ -105,7 +123,10 @@ async function generateStockJournal() {
               Godown: childWarehouse,
               Type: "out",
               Qty: childQuantity,
-              Rate: (rate * Math.abs(quantity)) / childQuantity,
+              Rate: (
+                (parseFloat(inStockRate) * Math.abs(quantity)) /
+                childQuantity
+              )?.toFixed(2),
             };
 
             stockJournalArray.push(stockJournalOutObjet);
@@ -135,7 +156,13 @@ async function generateStockJournal() {
     worksheet.addRow(stockJournalObj);
   }
 
-  await workbook.xlsx.writeFile("stockJournal.xlsx");
+  const stockJournalFileName = parseDate("stockJournal-%y%m%d%M%S.xlsx");
+  await workbook.xlsx.writeFile(stockJournalFileName);
+
+  return {
+    status: "success",
+    message: `${stockJournalFileName} created`,
+  };
 }
 
-module.exports = generateStockJournal;
+module.exports = generateStockJournalLightPacks;
