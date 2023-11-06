@@ -13,6 +13,7 @@ const updateGoogleSheets = require("./utils/googleSpreadsheetUtils");
 const secrets = require("../secrets.json");
 const createLightsMappingJSON = require("./utils/createLightsMappingJSON");
 const generateStockJournalLightPacks = require("./utils/generateStockJournalLightPacks");
+const generateStockJournalWarehouseAliasNegativeAdjustment = require("./utils/generateStockJournalWarehouseAliasNegativeAdjustment");
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -134,3 +135,22 @@ ipcMain.handle("generateStockJournalLightPacks", async e => {
   }
   console.log(result);
 });
+
+ipcMain.handle(
+  "generateStockJournalWarehouseAliasNegativeAdjustment",
+  async e => {
+    let result = await generateStockJournalWarehouseAliasNegativeAdjustment();
+    if (result.status == "failed") {
+      new Notification({
+        title: "Stock Journal creation Failed",
+        body: result.message,
+      }).show();
+    } else {
+      new Notification({
+        title: "Stock Journal creation Success",
+        body: result.message,
+      }).show();
+    }
+    console.log(result);
+  }
+);

@@ -1,4 +1,5 @@
 const Excel = require("exceljs");
+const path = require("path");
 const util = require("util");
 
 async function generateStockSummaryJson(filePath, warehouseAliasList) {
@@ -92,7 +93,7 @@ async function generateStockSummaryJson(filePath, warehouseAliasList) {
 
     var fs = require("fs");
     fs.writeFile(
-      "stock-report.json",
+      path.resolve() + "stock-report.json",
       JSON.stringify(stockReportJson),
       function (err) {
         if (err) {

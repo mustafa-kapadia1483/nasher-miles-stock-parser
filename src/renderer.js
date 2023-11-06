@@ -10,6 +10,10 @@ const uploadLightsMappingExcelButton = document.querySelector(
 const generateStockJournalLightPacksButton = document.querySelector(
   "#generate-stock-journal-light-packs-button"
 );
+const generateStockJournalNegativeStockWarehouseAdjustmentButton =
+  document.querySelector(
+    "#generate-stock-journal-negative-stock-warehouse-adjustment-button"
+  );
 
 const warehouseSelect = document.querySelector(`#warehouse-select`);
 
@@ -40,6 +44,15 @@ uploadLightsMappingExcelButton.addEventListener("click", async () => {
 generateStockJournalLightPacksButton.addEventListener("click", async () => {
   await ipcRenderer.invoke("generateStockJournalLightPacks");
 });
+
+generateStockJournalNegativeStockWarehouseAdjustmentButton.addEventListener(
+  "click",
+  async () => {
+    await ipcRenderer.invoke(
+      "generateStockJournalWarehouseAliasNegativeAdjustment"
+    );
+  }
+);
 
 uploadLightsMappingExcelButton.addEventListener("click", async () => {
   const result = await ipcRenderer.invoke("showDialog");
