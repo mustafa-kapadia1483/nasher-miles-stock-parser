@@ -2,6 +2,7 @@ const fs = require("fs");
 const ExcelJS = require("exceljs");
 const path = require("path");
 const parseDate = require("./strftime");
+const getStockJournalEntryJson = require("./getStockJournalEntryJson");
 
 const reorderArrayToStartFromGivenIndex = function (array, index) {
   let start = array.slice(index); // This will return me elements from a given index
@@ -83,34 +84,56 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
             warehouse: positiveQuantityWarehouse,
           } = positiveProductFromDifferentWarehouseAliasObj;
 
-          const stockJournalInObjet = {
-            Date: parseDate("%d/%b/%Y"),
-            VoucherType: parseDate("STN/%d%m%y/01"),
-            "Item Name": fullName.replaceAll(/\(\w{10}\)/gm, ""),
-            Unit: "Pcs",
-            Godown: warehouse,
-            Type: "in",
-            Qty: Math.abs(quantity),
-            Rate: positiveQuantityRate,
-          };
+          // const stockJournalInObjet = {
+          //   Date: parseDate("%d/%b/%Y"),
+          //   VoucherType: parseDate("STN/%d%m%y/01"),
+          //   "Item Name": fullName.replaceAll(/\(\w{10}\)/gm, ""),
+          //   Unit: "Pcs",
+          //   Godown: warehouse,
+          //   Type: "in",
+          //   Qty: Math.abs(quantity),
+          //   Rate: positiveQuantityRate,
+          // };
 
-          stockJournalArray.push(stockJournalInObjet);
+          const stockJournalInObject = getStockJournalEntryJson(
+            parseDate("%d/%b/%Y"), // Date
+            parseDate("STN/%d%m%y/01"), // vocher number
+            fullName.replaceAll(/\(\w{10}\)/gm, ""), // item name
+            warehouse, // godown
+            "in", // type (in or out)
+            Math.abs(quantity), // quantity (qty)
+            positiveQuantityRate, // rate
+            positiveQuantityRate * Math.abs(quantity) // amount (rate * qty)
+          );
 
-          const stockJournalOutObjet = {
-            Date: parseDate("%d/%b/%Y"),
-            VoucherType: parseDate("STN/%d%m%y/01"),
-            "Item Name": positiveQuantityProductName.replaceAll(
-              /\(\w{10}\)/gm,
-              ""
-            ),
-            Unit: "Pcs",
-            Godown: positiveQuantityWarehouse,
-            Type: "out",
-            Qty: positiveQuantityQuantity,
-            Rate: positiveQuantityRate,
-          };
+          stockJournalArray.push(stockJournalInObject);
 
-          stockJournalArray.push(stockJournalOutObjet);
+          // const stockJournalOutObjet = {
+          //   Date: parseDate("%d/%b/%Y"),
+          //   VoucherType: parseDate("STN/%d%m%y/01"),
+          //   "Item Name": positiveQuantityProductName.replaceAll(
+          //     /\(\w{10}\)/gm,
+          //     ""
+          //   ),
+          //   Unit: "Pcs",
+          //   Godown: positiveQuantityWarehouse,
+          //   Type: "out",
+          //   Qty: positiveQuantityQuantity,
+          //   Rate: positiveQuantityRate,
+          // };
+
+          const stockJournalOutObject = getStockJournalEntryJson(
+            parseDate("%d/%b/%Y"),
+            parseDate("STN/%d%m%y/01"),
+            positiveQuantityProductName.replaceAll(/\(\w{10}\)/gm, ""),
+            positiveQuantityWarehouse,
+            "out",
+            positiveQuantityQuantity,
+            positiveQuantityRate,
+            positiveQuantityRate * Math.abs(positiveQuantityQuantity)
+          );
+
+          stockJournalArray.push(stockJournalOutObject);
         }
       }
     }
