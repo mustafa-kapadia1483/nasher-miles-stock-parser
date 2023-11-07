@@ -87,7 +87,7 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
           // const stockJournalInObjet = {
           //   Date: parseDate("%d/%b/%Y"),
           //   VoucherType: parseDate("STN/%d%m%y/01"),
-          //   "Item Name": fullName.replaceAll(/\(\w{10}\)/gm, ""),
+          //   "Item Name": fullName,
           //   Unit: "Pcs",
           //   Godown: warehouse,
           //   Type: "in",
@@ -98,7 +98,7 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
           const stockJournalInObject = getStockJournalEntryJson(
             parseDate("%d/%b/%Y"), // Date
             parseDate("STN/%d%m%y/01"), // vocher number
-            fullName.replaceAll(/\(\w{10}\)/gm, ""), // item name
+            fullName, // item name
             warehouse, // godown
             "in", // type (in or out)
             Math.abs(quantity), // quantity (qty)
@@ -125,7 +125,7 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
           const stockJournalOutObject = getStockJournalEntryJson(
             parseDate("%d/%b/%Y"),
             parseDate("STN/%d%m%y/01"),
-            positiveQuantityProductName.replaceAll(/\(\w{10}\)/gm, ""),
+            positiveQuantityProductName,
             positiveQuantityWarehouse,
             "out",
             positiveQuantityQuantity,

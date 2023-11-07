@@ -106,7 +106,7 @@ async function generateStockJournalLightPacks() {
             // const stockJournalInObjet = {
             //   Date: parseDate("%d/%b/%Y"),
             //   VoucherType: parseDate("STN/%d%m%y/01"),
-            //   "Item Name": fullName.replaceAll(/\(\w{10}\)/gm, ""),
+            //   "Item Name": fullName,
             //   Unit: "Pcs",
             //   Godown: warehouse,
             //   Type: "in",
@@ -117,7 +117,7 @@ async function generateStockJournalLightPacks() {
             const stockJournalInObject = getStockJournalEntryJson(
               parseDate("%d/%b/%Y"), // Date
               parseDate("STN/%d%m%y/01"), // vocher number
-              fullName.replaceAll(/\(\w{10}\)/gm, ""), // item name
+              fullName, // item name
               warehouse, // godown
               "in", // type (in or out)
               Math.abs(quantity), // quantity (qty)
@@ -130,7 +130,7 @@ async function generateStockJournalLightPacks() {
             // const stockJournalOutObjet = {
             //   Date: parseDate("%d/%b/%Y"),
             //   VoucherType: parseDate("STN/%d%m%y/01"),
-            //   "Item Name": childProductName.replaceAll(/\(\w{10}\)/gm, ""),
+            //   "Item Name": childProductName,
             //   Unit: "Pcs",
             //   Godown: childWarehouse,
             //   Type: "out",
@@ -149,7 +149,7 @@ async function generateStockJournalLightPacks() {
             const stockJournalOutObject = getStockJournalEntryJson(
               parseDate("%d/%b/%Y"), // Date
               parseDate("STN/%d%m%y/01"), // vocher number
-              childProductName.replaceAll(/\(\w{10}\)/gm, ""), // item name
+              childProductName, // item name
               childWarehouse, // godown
               "out", // type (in or out)
               Math.abs(childQuantity), // quantity (qty)

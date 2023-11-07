@@ -14,7 +14,7 @@ function getStockJournalEntryJson(
     Date,
     VoucherType,
     "Vch Number": vchNumber,
-    "Item Name": itemName,
+    "Item Name": itemName.replaceAll(/\s\([\w]+\)$/gm, ""),
     Unit,
     Godown,
     Type,
