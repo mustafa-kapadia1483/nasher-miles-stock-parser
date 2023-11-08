@@ -13,34 +13,46 @@
 </head>
 
 <body>
-  <div class="container-fluid">
-    <div class="row">
+  <div class="col alert-container ms-posision-fixed-left-bottom ms-2">
+
+  </div>
+  <div class="container">
+    <div class="row ms-bg-light py-3 ms-shape-round">
       <div class="col button-container">
-        <button id="upload-stock-summary-button" class="ms-action mt-4">Upload Stock Summary Excel</button>
-        <button id="upload-lights-mapping-file-button" class="ms-secondary mt-4">Upload Lights Mapping Excel</button>
-        <button id="upload-luggage-mapping-file-button" class="ms-secondary mt-4">Upload Luggage Mapping Excel</button>
-        <button id="generate-stock-journal-luggage-packs-button" class="ms-action2 mt-4">Generate Stock Journal For
-          Negative Luggage Pack</button>
-        <button id="generate-stock-journal-light-packs-button" class="ms-action2 mt-4">Generate Stock Journal For
-          Negative Lights Pack</button>
-        <button id="generate-stock-journal-negative-stock-warehouse-adjustment-button" class="ms-action2 mt-4">Generate
-          Stock Journal For
-          Negative Stock Warehouse Adjustment</button>
+        <button id="upload-lights-mapping-file-button" class="ms-secondary">Upload Lights Mapping Excel</button>
+        <button id="upload-luggage-mapping-file-button" class="ms-secondary">Upload Luggage Mapping Excel</button>
       </div>
     </div>
-    <div class="row mt-4" id="inputs-row">
-      <div class="col">
-        <label for="warehouse-choice">Choose location for which stock summary is being uploaded:</label>
+    <div class="row mt-4 ms-bg-light py-3 ms-shape-round" id="inputs-row">
+      <div class="col-6">
+        <!-- <label for="warehouse-choice">Choose location for which stock summary is being uploaded:</label> -->
 
         <select name="warehouse-choice" id="warehouse-select">
-          <option value="">--Please choose an option--</option>
+          <option value="">--Choose location for stock summary--</option>
         </select>
 
       </div>
+      <div class="col-6">
+        <button id="upload-stock-summary-button" class="ms-action">Upload Stock Summary Excel</button>
+      </div>
     </div>
-    <div class="row mt-4">
-      <div class="col alert-container">
+    <div class="row mt-4 ms-bg-light py-3 ms-shape-round">
+      <div class="col-12">
+        <div>
+          <label for="stock-journal-date">Select date for stock journal entry</label>
+          <input type="date" name="stock-journal-date" id="stock-journal-date">
+        </div>
 
+        <div>
+          <button id="generate-stock-journal-luggage-packs-button" class="ms-action2 mt-4">Generate Stock Journal For
+            Negative Luggage Pack</button>
+          <button id="generate-stock-journal-light-packs-button" class="ms-action2 mt-4">Generate Stock Journal For
+            Negative Lights Pack</button>
+          <button id="generate-stock-journal-negative-stock-warehouse-adjustment-button"
+            class="ms-action2 mt-4">Generate
+            Stock Journal For
+            Negative Stock Warehouse Adjustment</button>
+        </div>
       </div>
     </div>
   </div>

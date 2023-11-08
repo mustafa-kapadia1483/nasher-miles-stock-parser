@@ -10,7 +10,7 @@ const reorderArrayToStartFromGivenIndex = function (array, index) {
   return start.concat(end); // Concat 2nd array to first and return the result.
 };
 
-async function generateStockJournalLightPacks() {
+async function generateStockJournalLightPacks(stockJournalDateObj) {
   const lightsAsinParentChildMappingJsonPath =
     "./lights-asin-parent-child-mapping.json";
   const stockReportJsonPath = "./stock-report.json";
@@ -104,7 +104,7 @@ async function generateStockJournalLightPacks() {
             }
 
             // const stockJournalInObjet = {
-            //   Date: parseDate("%d/%b/%Y"),
+            //   Date: parseDate("%d/%b/%Y", stockJournalDateObj),
             //   VoucherType: parseDate("STN/%d%m%y/01"),
             //   "Item Name": fullName,
             //   Unit: "Pcs",
@@ -115,7 +115,7 @@ async function generateStockJournalLightPacks() {
             // };
 
             const stockJournalInObject = getStockJournalEntryJson(
-              parseDate("%d/%b/%Y"), // Date
+              parseDate("%d/%b/%Y", stockJournalDateObj), // Date
               parseDate("STN/%d%m%y/01"), // vocher number
               fullName, // item name
               warehouse, // godown
@@ -128,7 +128,7 @@ async function generateStockJournalLightPacks() {
             stockJournalArray.push(stockJournalInObject);
 
             // const stockJournalOutObjet = {
-            //   Date: parseDate("%d/%b/%Y"),
+            //   Date: parseDate("%d/%b/%Y", stockJournalDateObj),
             //   VoucherType: parseDate("STN/%d%m%y/01"),
             //   "Item Name": childProductName,
             //   Unit: "Pcs",
@@ -147,7 +147,7 @@ async function generateStockJournalLightPacks() {
             )?.toFixed(2);
 
             const stockJournalOutObject = getStockJournalEntryJson(
-              parseDate("%d/%b/%Y"), // Date
+              parseDate("%d/%b/%Y", stockJournalDateObj), // Date
               parseDate("STN/%d%m%y/01"), // vocher number
               childProductName, // item name
               childWarehouse, // godown
@@ -162,6 +162,13 @@ async function generateStockJournalLightPacks() {
         }
       }
     }
+  }
+
+  if (stockJournalArray.length == 0) {
+    return {
+      status: "failed",
+      message: "No negative light packs found",
+    };
   }
 
   console.log("Warehouses ", warehouseArray);

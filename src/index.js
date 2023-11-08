@@ -102,22 +102,30 @@ ipcMain.handle("createLuggageMappingJSON", async (e, excelFilePath) => {
   return result;
 });
 
-ipcMain.handle("generateStockJournalLightPacks", async e => {
-  const result = await generateStockJournalLightPacks();
-  console.log(result);
-  return result;
-});
+ipcMain.handle(
+  "generateStockJournalLightPacks",
+  async (e, stockJournalDateObj) => {
+    const result = await generateStockJournalLightPacks(stockJournalDateObj);
+    console.log(result);
+    return result;
+  }
+);
 
-ipcMain.handle("generateStockJournalLuggagePacks", async e => {
-  const result = await generateStockJournalLuggagePacks();
-  console.log(result);
-  return result;
-});
+ipcMain.handle(
+  "generateStockJournalLuggagePacks",
+  async (e, stockJournalDateObj) => {
+    const result = await generateStockJournalLuggagePacks(stockJournalDateObj);
+    console.log(result);
+    return result;
+  }
+);
 
 ipcMain.handle(
   "generateStockJournalWarehouseAliasNegativeAdjustment",
-  async e => {
-    const result = await generateStockJournalWarehouseAliasNegativeAdjustment();
+  async (e, stockJournalDateObj) => {
+    const result = await generateStockJournalWarehouseAliasNegativeAdjustment(
+      stockJournalDateObj
+    );
     return result;
   }
 );

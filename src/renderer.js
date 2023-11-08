@@ -21,6 +21,9 @@ const generateStockJournalNegativeStockWarehouseAdjustmentButton =
     "#generate-stock-journal-negative-stock-warehouse-adjustment-button"
   );
 
+const stockJournalDatePicker = document.querySelector(`#stock-journal-date`);
+stockJournalDatePicker.valueAsDate = new Date();
+
 const warehouseSelect = document.querySelector(`#warehouse-select`);
 
 const warehouseNames = Object.keys(warehouseStateMappingJson);
@@ -82,7 +85,10 @@ uploadLuggageMappingExcelButton.addEventListener("click", async () => {
 });
 
 generateStockJournalLightPacksButton.addEventListener("click", async () => {
-  const result = await ipcRenderer.invoke("generateStockJournalLightPacks");
+  const result = await ipcRenderer.invoke(
+    "generateStockJournalLightPacks",
+    stockJournalDatePicker.valueAsDate
+  );
 
   if (result.status == "failed") {
     createAlert(`Stock Journal creation Failed, ${result.message}`);
@@ -92,7 +98,10 @@ generateStockJournalLightPacksButton.addEventListener("click", async () => {
 });
 
 generateStockJournalLuggagePacksButton.addEventListener("click", async () => {
-  const result = await ipcRenderer.invoke("generateStockJournalLuggagePacks");
+  const result = await ipcRenderer.invoke(
+    "generateStockJournalLuggagePacks",
+    stockJournalDatePicker.valueAsDate
+  );
 
   if (result.status == "failed") {
     createAlert(`Stock Journal creation Failed, ${result.message}`);
@@ -105,7 +114,8 @@ generateStockJournalNegativeStockWarehouseAdjustmentButton.addEventListener(
   "click",
   async () => {
     const result = await ipcRenderer.invoke(
-      "generateStockJournalWarehouseAliasNegativeAdjustment"
+      "generateStockJournalWarehouseAliasNegativeAdjustment",
+      stockJournalDatePicker.valueAsDate
     );
 
     if (result.status == "failed") {

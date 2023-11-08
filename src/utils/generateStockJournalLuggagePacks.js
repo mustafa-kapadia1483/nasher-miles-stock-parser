@@ -10,7 +10,7 @@ const reorderArrayToStartFromGivenIndex = function (array, index) {
   return start.concat(end); // Concat 2nd array to first and return the result.
 };
 
-async function generateStockJournalLuggagePacks() {
+async function generateStockJournalLuggagePacks(stockJournalDateObj) {
   const luggageAsinParentChildMappingJsonPath =
     "./luggage-asin-parent-child-mapping.json";
   const stockReportJsonPath = "./stock-report.json";
@@ -61,8 +61,8 @@ async function generateStockJournalLuggagePacks() {
 
   // Stock adjustment logic
 
+  let vchNumberCounter = 1;
   for (let warehouse of warehouseArray) {
-    let vchNumberCounter = 1;
     for (let productObj of stockSummaryJson[warehouse]) {
       const { productName, quantity, rate, fullName } = productObj;
       if (quantity < 0) {
@@ -119,7 +119,7 @@ async function generateStockJournalLuggagePacks() {
           } = luggageChildrenProductObj;
 
           const stockJournalOutObject = getStockJournalEntryJson(
-            parseDate("%d/%b/%Y"), // Date
+            parseDate("%d/%b/%Y", stockJournalDateObj), // Date
             vchNumber, // vocher number
             luggageChildFullName, // item name
             luggageChildWarehouse, // godown
@@ -135,7 +135,7 @@ async function generateStockJournalLuggagePacks() {
         }
 
         const stockJournalInObject = getStockJournalEntryJson(
-          parseDate("%d/%b/%Y"), // Date
+          parseDate("%d/%b/%Y", stockJournalDateObj), // Date
           vchNumber, // vocher number
           fullName, // item name
           warehouse, // godown
@@ -169,7 +169,7 @@ async function generateStockJournalLuggagePacks() {
         //   }
 
         //   // const stockJournalInObjet = {
-        //   //   Date: parseDate("%d/%b/%Y"),
+        //   //   Date: parseDate("%d/%b/%Y", stockJournalDateObj),
         //   //   VoucherType: parseDate("STN/%d%m%y/01"),
         //   //   "Item Name": fullName,
         //   //   Unit: "Pcs",
@@ -180,7 +180,7 @@ async function generateStockJournalLuggagePacks() {
         //   // };
 
         //   const stockJournalInObject = getStockJournalEntryJson(
-        //     parseDate("%d/%b/%Y"), // Date
+        //     parseDate("%d/%b/%Y", stockJournalDateObj), // Date
         //     parseDate("STN/%d%m%y/01"), // vocher number
         //     fullName, // item name
         //     warehouse, // godown
@@ -193,7 +193,7 @@ async function generateStockJournalLuggagePacks() {
         //   stockJournalArray.push(stockJournalInObject);
 
         //   // const stockJournalOutObjet = {
-        //   //   Date: parseDate("%d/%b/%Y"),
+        //   //   Date: parseDate("%d/%b/%Y", stockJournalDateObj),
         //   //   VoucherType: parseDate("STN/%d%m%y/01"),
         //   //   "Item Name": childProductName,
         //   //   Unit: "Pcs",
@@ -212,7 +212,7 @@ async function generateStockJournalLuggagePacks() {
         //   )?.toFixed(2);
 
         //   const stockJournalOutObject = getStockJournalEntryJson(
-        //     parseDate("%d/%b/%Y"), // Date
+        //     parseDate("%d/%b/%Y", stockJournalDateObj), // Date
         //     parseDate("STN/%d%m%y/01"), // vocher number
         //     childProductName, // item name
         //     childWarehouse, // godown

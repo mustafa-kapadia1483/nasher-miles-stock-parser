@@ -10,7 +10,9 @@ const reorderArrayToStartFromGivenIndex = function (array, index) {
   return start.concat(end); // Concat 2nd array to first and return the result.
 };
 
-async function generateStockJournalWarehouseAliasNegativeAdjustment() {
+async function generateStockJournalWarehouseAliasNegativeAdjustment(
+  stockJournalDateObj
+) {
   const stockReportJsonPath = "./stock-report.json";
 
   if (!fs.existsSync(path.resolve(__dirname, stockReportJsonPath))) {
@@ -85,7 +87,7 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
           } = positiveProductFromDifferentWarehouseAliasObj;
 
           // const stockJournalInObjet = {
-          //   Date: parseDate("%d/%b/%Y"),
+          //   Date: parseDate("%d/%b/%Y", stockJournalDateObj),
           //   VoucherType: parseDate("STN/%d%m%y/01"),
           //   "Item Name": fullName,
           //   Unit: "Pcs",
@@ -96,7 +98,7 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
           // };
 
           const stockJournalInObject = getStockJournalEntryJson(
-            parseDate("%d/%b/%Y"), // Date
+            parseDate("%d/%b/%Y", stockJournalDateObj), // Date
             parseDate("STN/%d%m%y/01"), // vocher number
             fullName, // item name
             warehouse, // godown
@@ -109,7 +111,7 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
           stockJournalArray.push(stockJournalInObject);
 
           // const stockJournalOutObjet = {
-          //   Date: parseDate("%d/%b/%Y"),
+          //   Date: parseDate("%d/%b/%Y", stockJournalDateObj),
           //   VoucherType: parseDate("STN/%d%m%y/01"),
           //   "Item Name": positiveQuantityProductName.replaceAll(
           //     /\(\w{10}\)/gm,
@@ -123,7 +125,7 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
           // };
 
           const stockJournalOutObject = getStockJournalEntryJson(
-            parseDate("%d/%b/%Y"),
+            parseDate("%d/%b/%Y", stockJournalDateObj),
             parseDate("STN/%d%m%y/01"),
             positiveQuantityProductName,
             positiveQuantityWarehouse,
@@ -137,6 +139,13 @@ async function generateStockJournalWarehouseAliasNegativeAdjustment() {
         }
       }
     }
+  }
+
+  if (stockJournalArray.length == 0) {
+    return {
+      status: "failed",
+      message: "No negative stock adjustments found",
+    };
   }
 
   console.log("Warehouses ", warehouseArray);
