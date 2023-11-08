@@ -9,11 +9,11 @@ const {
 const path = require("path");
 
 const generateStockSummaryJson = require("./utils/generateStockSummaryJson");
-const updateGoogleSheets = require("./utils/googleSpreadsheetUtils");
-const secrets = require("../secrets.json");
 const createLightsMappingJSON = require("./utils/createLightsMappingJSON");
 const generateStockJournalLightPacks = require("./utils/generateStockJournalLightPacks");
 const generateStockJournalWarehouseAliasNegativeAdjustment = require("./utils/generateStockJournalWarehouseAliasNegativeAdjustment");
+const createLuggageMappingJSON = require("./utils/createLuggageMappingJSON");
+const generateStockJournalLuggagePacks = require("./utils/generateStockJournalLuggagePacks");
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -97,9 +97,19 @@ ipcMain.handle("createLightsMappingJSON", async (e, excelFilePath) => {
   const result = await createLightsMappingJSON(excelFilePath);
   return result;
 });
+ipcMain.handle("createLuggageMappingJSON", async (e, excelFilePath) => {
+  const result = await createLuggageMappingJSON(excelFilePath);
+  return result;
+});
 
 ipcMain.handle("generateStockJournalLightPacks", async e => {
   const result = await generateStockJournalLightPacks();
+  console.log(result);
+  return result;
+});
+
+ipcMain.handle("generateStockJournalLuggagePacks", async e => {
+  const result = await generateStockJournalLuggagePacks();
   console.log(result);
   return result;
 });

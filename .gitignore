@@ -100,5 +100,6 @@ test.txt
 
 # Files to be generated
 lights-asin-parent-child-mapping.json
+luggage-asin-parent-child-mapping.json
 stock-report.json
 *.xlsx

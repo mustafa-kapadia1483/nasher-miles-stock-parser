@@ -7,8 +7,14 @@ const uploadStockSummaryButton = document.getElementById(
 const uploadLightsMappingExcelButton = document.querySelector(
   "#upload-lights-mapping-file-button"
 );
+const uploadLuggageMappingExcelButton = document.querySelector(
+  "#upload-luggage-mapping-file-button"
+);
 const generateStockJournalLightPacksButton = document.querySelector(
   "#generate-stock-journal-light-packs-button"
+);
+const generateStockJournalLuggagePacksButton = document.querySelector(
+  "#generate-stock-journal-luggage-packs-button"
 );
 const generateStockJournalNegativeStockWarehouseAdjustmentButton =
   document.querySelector(
@@ -54,8 +60,39 @@ uploadLightsMappingExcelButton.addEventListener("click", async () => {
   }
 });
 
+uploadLuggageMappingExcelButton.addEventListener("click", async () => {
+  const result = await ipcRenderer.invoke("showDialog");
+  if (result.filePaths.length == 0) {
+    return;
+  }
+  const createLuggageMappingJSONResult = await ipcRenderer.invoke(
+    "createLuggageMappingJSON",
+    result.filePaths[0]
+  );
+
+  if (createLuggageMappingJSONResult.status == "failed") {
+    createAlert(
+      `Luggage Mapping JSON creation Failed, ${createLuggageMappingJSONResult.message}`
+    );
+  } else {
+    createAlert(
+      `Luggage Mapping JSON creation Success, ${createLuggageMappingJSONResult.message}`
+    );
+  }
+});
+
 generateStockJournalLightPacksButton.addEventListener("click", async () => {
   const result = await ipcRenderer.invoke("generateStockJournalLightPacks");
+
+  if (result.status == "failed") {
+    createAlert(`Stock Journal creation Failed, ${result.message}`);
+  } else {
+    createAlert(`Stock Journal creation Success, ${result.message}`);
+  }
+});
+
+generateStockJournalLuggagePacksButton.addEventListener("click", async () => {
+  const result = await ipcRenderer.invoke("generateStockJournalLuggagePacks");
 
   if (result.status == "failed") {
     createAlert(`Stock Journal creation Failed, ${result.message}`);
