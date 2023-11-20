@@ -8,8 +8,12 @@ const uploadLightsMappingExcelButton = document.querySelector(
   "#upload-lights-mapping-file-button"
 );
 const uploadLuggageMappingExcelButton = document.querySelector(
-  "#upload-luggage-mapping-file-button"
+  "#upload-luggage-set-mapping-file-button"
 );
+const uploadProductFamilyMappingExcelButton = document.querySelector(
+  "#upload-product-family-mapping-file-button"
+);
+
 const generateStockJournalLightPacksButton = document.querySelector(
   "#generate-stock-journal-light-packs-button"
 );
@@ -19,6 +23,10 @@ const generateStockJournalLuggagePacksButton = document.querySelector(
 const generateStockJournalNegativeStockWarehouseAdjustmentButton =
   document.querySelector(
     "#generate-stock-journal-negative-stock-warehouse-adjustment-button"
+  );
+const generateStockJournalProductFamilyAdjustmentButton =
+  document.querySelector(
+    "#generate-stock-journal-product-family-adjustment-button"
   );
 
 const stockJournalDatePicker = document.querySelector(`#stock-journal-date`);
@@ -84,6 +92,27 @@ uploadLuggageMappingExcelButton.addEventListener("click", async () => {
   }
 });
 
+uploadProductFamilyMappingExcelButton.addEventListener("click", async () => {
+  const result = await ipcRenderer.invoke("showDialog");
+  if (result.filePaths.length == 0) {
+    return;
+  }
+  const createProductFamilyMappingJSONResult = await ipcRenderer.invoke(
+    "createProductFamilyMappingJSON",
+    result.filePaths[0]
+  );
+
+  if (createProductFamilyMappingJSONResult.status == "failed") {
+    createAlert(
+      `Product Mapping JSON creation Failed, ${createProductFamilyMappingJSONResult.message}`
+    );
+  } else {
+    createAlert(
+      `Product Mapping JSON creation Success, ${createProductFamilyMappingJSONResult.message}`
+    );
+  }
+});
+
 generateStockJournalLightPacksButton.addEventListener("click", async () => {
   const result = await ipcRenderer.invoke(
     "generateStockJournalLightPacks",
@@ -126,13 +155,21 @@ generateStockJournalNegativeStockWarehouseAdjustmentButton.addEventListener(
   }
 );
 
-// uploadLightsMappingExcelButton.addEventListener("click", async () => {
-//   const result = await ipcRenderer.invoke("showDialog");
-//   if (result.filePaths.length == 0) {
-//     return;
-//   }
-//   await ipcRenderer.invoke("createLightsMappingJSON", result.filePaths[0]);
-// });
+generateStockJournalProductFamilyAdjustmentButton.addEventListener(
+  "click",
+  async () => {
+    const result = await ipcRenderer.invoke(
+      "generateStockJournalProductFamilyAdjustment",
+      stockJournalDatePicker.valueAsDate
+    );
+
+    if (result.status == "failed") {
+      createAlert(`Stock Journal creation Failed, ${result.message}`);
+    } else {
+      createAlert(`Stock Journal creation Success, ${result.message}`);
+    }
+  }
+);
 
 uploadStockSummaryButton.addEventListener("click", async () => {
   const result = await ipcRenderer.invoke("showDialog");
@@ -241,16 +278,25 @@ function createLoader(parent = document.body) {
   return div;
 }
 
-function createAlert(message) {
+function createAlert(message, type) {
   const alertContainer = document.querySelector(".alert-container");
   const alert = document.createElement("div");
   alert.className = "ms-alert";
 
-  alertContainer.append(alert);
-
   const p = document.createElement("p");
+  const icon = document.createElement("i");
+
+  switch (type) {
+    case "success":
+      alert.style.backgroundColor = "green";
+      break;
+    case "failed":
+      alert.style.backgroundColor = "green";
+      break;
+  }
   p.textContent = message;
 
+  alertContainer.append(alert);
   alert.append(p);
 
   setTimeout(() => {

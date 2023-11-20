@@ -102,4 +102,5 @@ test.txt
 lights-asin-parent-child-mapping.json
 luggage-asin-parent-child-mapping.json
 stock-report.json
+product-family-mapping.json
 *.xlsx

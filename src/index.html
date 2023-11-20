@@ -13,20 +13,25 @@
 </head>
 
 <body>
-  <div class="col alert-container ms-posision-fixed-left-bottom ms-2">
+  <div class="col alert-container ms-posision-fixed-right-bottom me-2" style="z-index: 999999999;">
 
   </div>
   <div class="container">
+    <!-- Upload mapping files section start -->
     <div class="row ms-bg-light py-3 ms-shape-round">
-      <div class="col button-container">
+      <div class="col button-container ms-display-flex ms-flex-wrap-wrap" style="gap: 1em">
         <button id="upload-lights-mapping-file-button" class="ms-secondary">Upload Lights Mapping Excel</button>
-        <button id="upload-luggage-mapping-file-button" class="ms-secondary">Upload Luggage Mapping Excel</button>
+        <button id="upload-luggage-set-mapping-file-button" class="ms-secondary">Upload Luggage Set Mapping
+          Excel</button>
+        <button id="upload-product-family-mapping-file-button" class="ms-secondary">Upload Product Family Mapping
+          Excel</button>
       </div>
     </div>
+    <!-- Upload mapping files section start -->
+
+    <!-- Upload stock summary section start -->
     <div class="row mt-4 ms-bg-light py-3 ms-shape-round" id="inputs-row">
       <div class="col-6">
-        <!-- <label for="warehouse-choice">Choose location for which stock summary is being uploaded:</label> -->
-
         <select name="warehouse-choice" id="warehouse-select">
           <option value="">--Choose location for stock summary--</option>
         </select>
@@ -36,6 +41,9 @@
         <button id="upload-stock-summary-button" class="ms-action">Upload Stock Summary Excel</button>
       </div>
     </div>
+    <!-- Upload stock summary section start -->
+
+    <!-- Generate stock journal section start -->
     <div class="row mt-4 ms-bg-light py-3 ms-shape-round">
       <div class="col-12">
         <div>
@@ -52,9 +60,14 @@
             class="ms-action2 mt-4">Generate
             Stock Journal For
             Negative Stock Warehouse Adjustment</button>
+          <button id="generate-stock-journal-product-family-adjustment-button" class="ms-action2 mt-4">Generate
+            Stock Journal For
+            Product Family Adjustment</button>
         </div>
       </div>
     </div>
+    <!-- Generate stock journal section start -->
+
   </div>
 </body>
 
