@@ -11,26 +11,23 @@ const reorderArrayToStartFromGivenIndex = function (array, index) {
 };
 
 async function generateStockJournalLuggagePacks(stockJournalDateObj) {
-  const luggageAsinParentChildMappingJsonPath =
-    "./luggage-asin-parent-child-mapping.json";
-  const stockReportJsonPath = "./stock-report.json";
+  const luggageAsinParentChildMappingJsonPath = `${__dirname}/generated_files/luggage-asin-parent-child-mapping.json`;
+  const stockReportJsonPath = `${__dirname}/generated_files/stock-report.json`;
 
-  if (
-    !fs.existsSync(
-      path.resolve(__dirname, luggageAsinParentChildMappingJsonPath)
-    )
-  ) {
+  if (!fs.existsSync(luggageAsinParentChildMappingJsonPath)) {
     return {
       status: "failed",
       message: "Luggage asin parent child mapping data not uploaded",
     };
   }
-  if (!fs.existsSync(path.resolve(__dirname, stockReportJsonPath))) {
+  if (!fs.existsSync(stockReportJsonPath)) {
     return { status: "failed", message: "Stock summary data not uploaded" };
   }
 
-  const lightsAsinParentChildMappingJson = require(luggageAsinParentChildMappingJsonPath);
-  const stockSummaryJson = require(stockReportJsonPath);
+  const luggageAsinParentChildMappingJson = JSON.parse(
+    fs.readFileSync(luggageAsinParentChildMappingJsonPath)
+  );
+  const stockSummaryJson = JSON.parse(fs.readFileSync(stockReportJsonPath));
 
   /* Create Obj of all products with negative stock values */
   const stockJournalArray = [];
@@ -68,7 +65,7 @@ async function generateStockJournalLuggagePacks(stockJournalDateObj) {
       if (quantity < 0) {
         // Lights pack adjustment logic
         const luggageMappingJson =
-          lightsAsinParentChildMappingJson[productName];
+          luggageAsinParentChildMappingJson[productName];
 
         if (luggageMappingJson == undefined) continue;
 

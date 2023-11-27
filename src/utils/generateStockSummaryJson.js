@@ -92,14 +92,10 @@ async function generateStockSummaryJson(filePath, warehouseAliasList) {
     }
 
     var fs = require("fs");
-    fs.writeFile(
-      `${__dirname}/stock-report.json`,
+    fs.writeFileSync(
+      `${__dirname}/generated_files/stock-report.json`,
       JSON.stringify(stockReportJson),
-      function (err) {
-        if (err) {
-          console.log(err);
-        }
-      }
+      { encoding: "utf8", flag: "w" }
     );
 
     console.log("Current directory:", __dirname);

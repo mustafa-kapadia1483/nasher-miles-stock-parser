@@ -35,14 +35,10 @@ async function createLuggageMappingJSON(excelFilePath) {
     }
 
     var fs = require("fs");
-    fs.writeFile(
-      `${__dirname}/luggage-asin-parent-child-mapping.json`,
+    fs.writeFileSync(
+      `${__dirname}/generated_files/luggage-asin-parent-child-mapping.json`,
       JSON.stringify(luggageMappingJSON),
-      function (err) {
-        if (err) {
-          console.log(err);
-        }
-      }
+      { encoding: "utf8", flag: "w" }
     );
 
     return {

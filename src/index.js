@@ -16,6 +16,7 @@ const createLuggageMappingJSON = require("./utils/createLuggageMappingJSON");
 const generateStockJournalLuggagePacks = require("./utils/generateStockJournalLuggagePacks");
 const createProductFamilyMappingJSON = require("./utils/createProductFamilyMappingJSON");
 const generateStockJournalProductFamilyAdjustment = require("./utils/generateStockJournalProductFamilyAdjustment");
+const removeGeneratedFiles = require("./utils/removeGeneratedFiles");
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -147,3 +148,8 @@ ipcMain.handle(
     return result;
   }
 );
+
+ipcMain.handle("removeGeneratedFiles", async (e, excelFilePath) => {
+  const result = removeGeneratedFiles();
+  return result;
+});

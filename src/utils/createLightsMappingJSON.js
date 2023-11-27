@@ -22,14 +22,10 @@ async function createLightsMappingJSON(excelFilePath) {
     }
 
     var fs = require("fs");
-    fs.writeFile(
-      `${__dirname}/lights-asin-parent-child-mapping.json`,
+    fs.writeFileSync(
+      `${__dirname}/generated_files/lights-asin-parent-child-mapping.json`,
       JSON.stringify(lightsMappingJSON),
-      function (err) {
-        if (err) {
-          console.log(err);
-        }
-      }
+      { encoding: "utf8", flag: "w" }
     );
 
     return {

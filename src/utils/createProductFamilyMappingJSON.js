@@ -28,14 +28,10 @@ async function createProductFamilyMappingJSON(excelFilePath) {
     }
 
     var fs = require("fs");
-    fs.writeFile(
-      `${__dirname}/product-family-mapping.json`,
+    fs.writeFileSync(
+      `${__dirname}/generated_files/product-family-mapping.json`,
       JSON.stringify(productFamilyMapping),
-      function (err) {
-        if (err) {
-          console.log(err);
-        }
-      }
+      { encoding: "utf8", flag: "w" }
     );
 
     return {

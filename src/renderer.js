@@ -29,6 +29,10 @@ const generateStockJournalProductFamilyAdjustmentButton =
     "#generate-stock-journal-product-family-adjustment-button"
   );
 
+const removeGeneratedFilesButton = document.querySelector(
+  "#remove-generated-files-button"
+);
+
 const stockJournalDatePicker = document.querySelector(`#stock-journal-date`);
 stockJournalDatePicker.valueAsDate = new Date();
 
@@ -170,6 +174,16 @@ generateStockJournalProductFamilyAdjustmentButton.addEventListener(
     }
   }
 );
+
+removeGeneratedFilesButton.addEventListener("click", async () => {
+  const result = await ipcRenderer.invoke("removeGeneratedFiles");
+
+  if (result.status == "failed") {
+    createAlert(`Failed, ${result.message}`);
+  } else {
+    createAlert(`Success, ${result.message}`);
+  }
+});
 
 uploadStockSummaryButton.addEventListener("click", async () => {
   const result = await ipcRenderer.invoke("showDialog");

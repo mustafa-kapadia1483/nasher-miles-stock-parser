@@ -24,21 +24,23 @@ const getProductFamily = function (productASIN, productFamilyMappingArr) {
 async function generateStockJournalProductFamilyAdjustment(
   stockJournalDateObj
 ) {
-  const stockReportJsonPath = "./stock-report.json";
-  const productFamilyMappingJsonPath = "./product-family-mapping.json";
+  const stockReportJsonPath = `${__dirname}/generated_files/stock-report.json`;
+  const productFamilyMappingJsonPath = `${__dirname}/generated_files/product-family-mapping.json`;
 
-  if (!fs.existsSync(path.resolve(__dirname, productFamilyMappingJsonPath))) {
+  if (!fs.existsSync(productFamilyMappingJsonPath)) {
     return {
       status: "failed",
       message: "Product family mapping data not uploaded",
     };
   }
-  if (!fs.existsSync(path.resolve(__dirname, stockReportJsonPath))) {
+  if (!fs.existsSync(stockReportJsonPath)) {
     return { status: "failed", message: "Stock summary data not uploaded" };
   }
 
-  const productFamilyMappingArr = require(productFamilyMappingJsonPath);
-  const stockSummaryJson = require(stockReportJsonPath);
+  const productFamilyMappingArr = JSON.parse(
+    fs.readFileSync(productFamilyMappingJsonPath)
+  );
+  const stockSummaryJson = JSON.parse(fs.readFileSync(stockReportJsonPath));
 
   /* Create Obj of all products with negative stock values */
   const stockJournalArray = [];

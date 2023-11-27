@@ -13,13 +13,13 @@ const reorderArrayToStartFromGivenIndex = function (array, index) {
 async function generateStockJournalWarehouseAliasNegativeAdjustment(
   stockJournalDateObj
 ) {
-  const stockReportJsonPath = "./stock-report.json";
+  const stockReportJsonPath = `${__dirname}/generated_files/stock-report.json`;
 
-  if (!fs.existsSync(path.resolve(__dirname, stockReportJsonPath))) {
+  if (!fs.existsSync(stockReportJsonPath)) {
     return { status: "failed", message: "Stock summary data not uploaded" };
   }
 
-  const stockSummaryJson = require(stockReportJsonPath);
+  const stockSummaryJson = JSON.parse(fs.readFileSync(stockReportJsonPath));
 
   /* Create Obj of all products with negative stock values */
   const stockJournalArray = [];

@@ -1,7 +1,7 @@
 {
   "name": "nasher-miles-stock-parser",
   "productName": "nasher-miles-stock-parser",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Parse stock summary & create stock journal for negative stock adjustments",
   "main": "src/index.js",
   "scripts": {
@@ -19,10 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
-    "exceljs": "^4.3.0",
-    "google-auth-library": "^8.9.0",
-    "google-spreadsheet": "^4.0.2",
-    "pdf2json": "^3.0.4"
+    "exceljs": "^4.3.0"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.4.1",

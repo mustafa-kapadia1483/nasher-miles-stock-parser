@@ -11,26 +11,23 @@ const reorderArrayToStartFromGivenIndex = function (array, index) {
 };
 
 async function generateStockJournalLightPacks(stockJournalDateObj) {
-  const lightsAsinParentChildMappingJsonPath =
-    "./lights-asin-parent-child-mapping.json";
-  const stockReportJsonPath = "./stock-report.json";
+  const lightsAsinParentChildMappingJsonPath = `${__dirname}/generated_files/lights-asin-parent-child-mapping.json`;
+  const stockReportJsonPath = `${__dirname}/generated_files/stock-report.json`;
 
-  if (
-    !fs.existsSync(
-      path.resolve(__dirname, lightsAsinParentChildMappingJsonPath)
-    )
-  ) {
+  if (!fs.existsSync(lightsAsinParentChildMappingJsonPath)) {
     return {
       status: "failed",
       message: "Lights asin parent child mapping data not uploaded",
     };
   }
-  if (!fs.existsSync(path.resolve(__dirname, stockReportJsonPath))) {
+  if (!fs.existsSync(stockReportJsonPath)) {
     return { status: "failed", message: "Stock summary data not uploaded" };
   }
 
-  const lightsAsinParentChildMappingJson = require(lightsAsinParentChildMappingJsonPath);
-  const stockSummaryJson = require(stockReportJsonPath);
+  const lightsAsinParentChildMappingJson = JSON.parse(
+    fs.readFileSync(lightsAsinParentChildMappingJsonPath)
+  );
+  const stockSummaryJson = JSON.parse(fs.readFileSync(stockReportJsonPath));
 
   /* Create Obj of all products with negative stock values */
   const stockJournalArray = [];
